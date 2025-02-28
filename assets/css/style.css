@@ -253,12 +253,16 @@ nav.navbar.bootsnav .navbar-toggle i{color: #d92cf9;}
     color: #3c4258;
     text-transform: initial;
     line-height: 1.8;
+    /* NIENNQ ==> editted (at 2025-02-28) */
+    text-align: justify;
 }
 .single-about-txt p {
     font-size: 16px;
     color: #999fb3;
     padding: 35px 0 43px;
     border-bottom: 1px solid #999fb3;
+    /* NIENNQ ==> editted (at 2025-02-28) */
+    text-align: justify;
 }
 .single-about-add-info {
     margin: 35px 0;
@@ -284,7 +288,8 @@ nav.navbar.bootsnav .navbar-toggle i{color: #d92cf9;}
 }
 .single-about-img img {
     max-width: 500px;
-    height: 468px;
+    /* height: 468px; NIENNQ ==> editted (at 2025-02-28) */
+    height: auto;
 }
 .about-list-icon{
     display: flex;

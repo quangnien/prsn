@@ -125,3 +125,48 @@ $(document).ready(function(){
 
 });	
 	
+
+// JavaScript for PDF View
+function viewPDF() {
+	document.getElementById("pdf-frame").src = "assets/download/CV_NGUYENQUANGNIEN.pdf";
+	document.getElementById("pdf-viewer").style.display = "flex"; // Show PDF viewer
+  
+	document.getElementById("btn-view").style.display = "none"; // Hide View CV button
+	document.getElementById("btn-close").style.display = "inline-block"; // Show Close CV button
+}
+  
+function closePDF() {
+	document.getElementById("pdf-viewer").style.display = "none"; // Hide PDF viewer
+	document.getElementById("pdf-frame").src = ""; // Reset PDF to avoid loading issues
+
+	document.getElementById("btn-close").style.display = "none"; // Hide Close CV button
+	document.getElementById("btn-view").style.display = "inline-block"; // Show View CV button
+}
+  
+  // SENT EMAIL.
+document.querySelector("form").addEventListener("submit", function(event) {
+	event.preventDefault(); // Prevent default form submission
+	var form = this;
+	var messageDiv = document.getElementById("form-message");
+  
+	fetch(form.action, {
+		method: "POST",
+		body: new FormData(form),
+		headers: { "Accept": "application/json" }
+	}).then(response => {
+		if (response.ok) {
+			messageDiv.textContent = "✅ Your message has been sent successfully!";
+			messageDiv.className = "success-message";
+			form.reset(); // Reset form fields
+		} else {
+			messageDiv.textContent = "❌ Oops! Something went wrong. Please try again.";
+			messageDiv.className = "error-message";
+		}
+	}).catch(error => {
+		messageDiv.textContent = "❌ Error: " + error;
+		messageDiv.className = "error-message";
+	});
+  
+	messageDiv.style.display = "block"; // Show message
+});
+  
