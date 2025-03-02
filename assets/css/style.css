@@ -507,6 +507,12 @@ span.single-timeline-horizontal.spacial-horizontal-line {width: 88px;}
     font-size: 14px;
     color: #999fb3;
 }
+/* niennq (2025-03-02) */
+.main-timeline .description-justify {
+    font-size: 14px;
+    color: #999fb3;
+    text-align: justify;
+}
 .main-timeline .timeline-content.right{
     float: right;
     text-align: left;
