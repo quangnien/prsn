@@ -676,6 +676,13 @@ span.single-timeline-horizontal.spacial-horizontal-line {width: 88px;}
     font-size: 14px;
     text-align: center;
 }
+/* niennq (2025-03-04) */
+.isotope-overlay p {
+    display: inline-block;
+    color: #fff;
+    font-size: 14px;
+    text-align: center;
+}
 .isotope .item:hover .isotope-overlay{
     -webkit-transform:scale(1);
     -moz-transform:scale(1);
