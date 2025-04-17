@@ -54,13 +54,15 @@ class encn_Oxford {
                 //    definition += `<span class='tran'><span class='eng_tran'>${def.data[0].data[0].text}</span></span>`;
                 if (def.tag == 'd' || def.tag == 'ud')
                     definition += pos + `<span class='tran'><span class='eng_tran'>${def.enText}</span></span>`;
-                if (def.tag == 'x' && sentnum < maxexample) {
-                    sentnum += 1;
-                    let enText = def.enText.replace(RegExp(exp, 'gi'), `<b>${exp}</b>`);
-                    sentence += `<li class='sent'><span class='eng_sent'>${enText}</span></li>`;
-                }
+
+                // qnien => edit
+                // if (def.tag == 'x' && sentnum < maxexample) {
+                //     sentnum += 1;
+                //     let enText = def.enText.replace(RegExp(exp, 'gi'), `<b>${exp}</b>`);
+                //     sentence += `<li class='sent'><span class='eng_sent'>${enText}</span></li>`;
+                // }
             }
-            definition += sentence ? `<ul class="sents">${sentence}</ul>` : '';
+            // qnien => edit definition += sentence ? `<ul class="sents">${sentence}</ul>` : '';
             return definition;
         }
         const maxexample = this.maxexample;
@@ -220,9 +222,13 @@ class encn_Oxford {
                 span.pos  {text-transform:lowercase; font-size:0.9em; margin-right:5px; padding:2px 4px; color:white; background-color:#0d47a1; border-radius:3px;}
                 span.tran {margin:0; padding:0;}
                 span.eng_tran {margin-right:3px; padding:0;}
-                ul.sents {font-size:0.9em; list-style:square inside; margin:3px 0;padding:5px;background:rgba(13,71,161,0.1); border-radius:5px;display:none; }
+                // qnien => update
+                // ul.sents {font-size:0.9em; list-style:square inside; margin:3px 0;padding:5px;background:rgba(13,71,161,0.1); border-radius:5px;display:none; }
+                // li.sent  {margin:0; padding:0;display:none;}
+                ul.sents {font-size:0.9em; list-style:square inside; margin:3px 0;padding:5px;background:rgba(13,71,161,0.1); border-radius:5px;display:none;}
                 li.sent  {margin:0; padding:0;display:none;}
                 span.eng_sent {margin-right:5px;}
+                
             </style>`;
         return css;
     }
