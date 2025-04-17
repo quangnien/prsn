@@ -12,7 +12,6 @@ class encn_Oxford {
         return 'Oxford EN->EN Dictionary';
     }
 
-
     setOptions(options) {
         this.options = options;
         this.maxexample = options.maxexample;
@@ -44,25 +43,14 @@ class encn_Oxford {
         function buildDefinitionBlock(exp, pos, defs) {
             if (!defs || !Array.isArray(defs) || defs.length < 0) return '';
             let definition = '';
-            let sentence = '';
-            let sentnum = 0;
             for (const def of defs) {
                 if (def.text) definition += `<span class='tran'><span class='eng_tran'>${def.text}</span></span>`;
                 if (def.tag == 'id' || def.tag == 'pv')
                     definition += def.enText ? `<div class="idmphrase">${def.enText}</div>` : '';
-                //if (def.tag == 'xrs')
-                //    definition += `<span class='tran'><span class='eng_tran'>${def.data[0].data[0].text}</span></span>`;
                 if (def.tag == 'd' || def.tag == 'ud')
                     definition += pos + `<span class='tran'><span class='eng_tran'>${def.enText}</span></span>`;
-
-                // qnien => edit
-                // if (def.tag == 'x' && sentnum < maxexample) {
-                //     sentnum += 1;
-                //     let enText = def.enText.replace(RegExp(exp, 'gi'), `<b>${exp}</b>`);
-                //     sentence += `<li class='sent'><span class='eng_sent'>${enText}</span></li>`;
-                // }
+                // Explicitly skip example sentences (tag 'x', 'xrs', etc.)
             }
-            // qnien => edit definition += sentence ? `<ul class="sents">${sentence}</ul>` : '';
             return definition;
         }
         const maxexample = this.maxexample;
@@ -85,10 +73,9 @@ class encn_Oxford {
         try {
             data = JSON.parse(await api.fetch(dicturl));
             let oxford = getOxford(data);
-            let bdsimple = oxford.length ? [] : getBDSimple(data); //Combine Youdao Concise English-Chinese Dictionary to the end.
-            let bstrans = oxford.length || bdsimple.length ? [] : getBDTrans(data); //Combine Youdao Translation (if any) to the end.
+            let bdsimple = oxford.length ? [] : getBDSimple(data);
+            let bstrans = oxford.length || bdsimple.length ? [] : getBDTrans(data);
             return [].concat(oxford, bdsimple, bstrans);
-
         } catch (err) {
             return [];
         }
@@ -173,24 +160,17 @@ class encn_Oxford {
                                 definition += pos + `<span class='tran'><span class='eng_tran'>${group.enText}</span></span>`;
                                 definitions.push(definition);
                             }
-
                             if (group.tag == 'n-g') {
                                 definition += buildDefinitionBlock(expression, pos, group.data);
                                 definitions.push(definition);
                             }
-
-
-                            //if (group.tag == 'xrs') {
-                            //    definition += buildDefinitionBlock(pos, group.data[0].data);
-                            //    definitions.push(definition);
-                            //}
-
+                            // Skip sentence-related tags (xrs, vrs)
                             if (group.tag == 'sd-g' || group.tag == 'ids-g' || group.tag == 'pvs-g') {
                                 for (const item of group.data) {
                                     if (item.tag == 'sd') definition = `<div class="dis"><span class="eng_dis">${item.enText}</span></div>` + definition;
                                     let defs = [];
                                     if (item.tag == 'n-g' || item.tag == 'id-g' || item.tag == 'pv-g') defs = item.data;
-                                    if (item.tag == 'vrs' || item.tag == 'xrs') defs = item.data[0].data;
+                                    // Explicitly skip vrs, xrs to avoid sentences
                                     definition += buildDefinitionBlock(expression, pos, defs);
                                 }
                                 definitions.push(definition);
@@ -198,15 +178,17 @@ class encn_Oxford {
                         }
                     }
                 }
+                // Post-process definitions to remove any <ul class="sents"> or <div class="sents">
+                definitions = definitions.map(def => 
+                    def.replace(/<ul class="sents">.*?<\/ul>|<div class="sents">.*?</div>/gis, '')
+                );
                 let css = encn_Oxford.renderCSS();
                 notes.push({ css, expression, reading, definitions, audios });
                 return notes;
             } catch (error) {
                 return [];
             }
-
         }
-
     }
 
     static renderCSS() {
@@ -222,13 +204,8 @@ class encn_Oxford {
                 span.pos  {text-transform:lowercase; font-size:0.9em; margin-right:5px; padding:2px 4px; color:white; background-color:#0d47a1; border-radius:3px;}
                 span.tran {margin:0; padding:0;}
                 span.eng_tran {margin-right:3px; padding:0;}
-                // qnien => update
-                // ul.sents {font-size:0.9em; list-style:square inside; margin:3px 0;padding:5px;background:rgba(13,71,161,0.1); border-radius:5px;display:none; }
-                // li.sent  {margin:0; padding:0;display:none;}
-                ul.sents {font-size:0.9em; list-style:square inside; margin:3px 0;padding:5px;background:rgba(13,71,161,0.1); border-radius:5px;display:none;}
-                li.sent  {margin:0; padding:0;display:none;}
                 span.eng_sent {margin-right:5px;}
-                
+                div.sents {display:none;} /* Fallback for extension-added <div class="sents"> */
             </style>`;
         return css;
     }
