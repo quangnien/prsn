@@ -53,7 +53,7 @@ class encn_Oxford {
                 //if (def.tag == 'xrs')
                 //    definition += `<span class='tran'><span class='eng_tran'>${def.data[0].data[0].text}</span></span>`;
                 if (def.tag == 'd' || def.tag == 'ud')
-                    definition += pos + `<span class='tran'><span class='eng_tran'>${def.enText}</span></span>`;
+                    // qnien update definition += pos + `<span class='tran'><span class='eng_tran'>${def.enText}</span></span>`;
 
                 // qnien => edit
                 // if (def.tag == 'x' && sentnum < maxexample) {
@@ -127,7 +127,7 @@ class encn_Oxford {
                     if (def.means && def.means.length > 0) {
                         let pos = def.part || def.part_name || '';
                         pos = pos ? `<span class="pos simple">${pos}</span>` : '';
-                        definition += `<li class="ec">${pos}<span class="ec_chn">${def.means.join()}</span></li>`;
+                        // qnien update definition += `<li class="ec">${pos}<span class="ec_chn">${def.means.join()}</span></li>`;
                     }
                 definition += '</ul>';
                 let css = `<style>
@@ -174,10 +174,11 @@ class encn_Oxford {
                                 definitions.push(definition);
                             }
 
-                            if (group.tag == 'n-g') {
-                                definition += buildDefinitionBlock(expression, pos, group.data);
-                                definitions.push(definition);
-                            }
+                            // qnien update
+                            // if (group.tag == 'n-g') {
+                            //     definition += buildDefinitionBlock(expression, pos, group.data);
+                            //     definitions.push(definition);
+                            // }
 
 
                             //if (group.tag == 'xrs') {
