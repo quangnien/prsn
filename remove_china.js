@@ -205,7 +205,7 @@ class encn_Oxford {
                 span.tran {margin:0; padding:0;}
                 span.eng_tran {margin-right:3px; padding:0;}
                 span.eng_sent {margin-right:5px;}
-                div.sents {display:none;} /* Fallback for extension-added <div class="sents"> */
+                ul.sents {display:none;} /* Fallback for extension-added <div class="sents"> */
             </style>`;
         return css;
     }
