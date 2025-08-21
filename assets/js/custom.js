@@ -128,7 +128,7 @@ $(document).ready(function(){
 
 // JavaScript for PDF View
 function viewPDF() {
-	document.getElementById("pdf-frame").src = "assets/download/CV_NGUYENQUANGNIEN.pdf";
+	document.getElementById("pdf-frame").src = "assets/download/CV_MIDDLE_JAVA_NGUYENQUANGNIEN.pdf";
 	document.getElementById("pdf-viewer").style.display = "flex"; // Show PDF viewer
   
 	document.getElementById("btn-view").style.display = "none"; // Hide View CV button
