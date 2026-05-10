@@ -1014,6 +1014,22 @@ span.single-timeline-horizontal.spacial-horizontal-line {width: 88px;}
 
 /*========================Thank you=================
 
+/* ---- About info grid — 6-item unified row ---- */
+.about-info-grid {
+    margin-top: 0;
+}
+.about-info-grid .single-about-add-info {
+    margin: 22px 0 0;
+}
+.about-info-grid .single-about-add-info p {
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+.about-company-name {
+    color: #d92cf9 !important;
+    font-weight: 600 !important;
+}
+
 /* ---- Typing effect cursor ---- */
 .typing-cursor {
     display: inline-block;
