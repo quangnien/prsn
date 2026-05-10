@@ -909,6 +909,34 @@ span.single-timeline-horizontal.spacial-horizontal-line {width: 88px;}
     box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
 }
 
+/* Download CV Button — uses .header-text a specificity override */
+.btn-download,
+.header-text .btn-container .btn-download {
+    display: inline-block;
+    background-color: transparent;
+    color: #fff;
+    border: 2px solid #b636ff;
+    padding: 11px 22px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    line-height: 1.2;
+    width: auto;
+    height: auto;
+    text-transform: capitalize;
+}
+.btn-download:hover,
+.header-text .btn-container .btn-download:hover {
+    background-color: #b636ff;
+    color: #fff;
+    border-color: #b636ff;
+    transform: scale(1.05);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+}
+
 /* Close PDF Button - Dark Gray */
 .btn-close {
     background-color: #6c757d; /* Dark Gray */
@@ -985,3 +1013,111 @@ span.single-timeline-horizontal.spacial-horizontal-line {width: 88px;}
 
 
 /*========================Thank you=================
+
+/* ---- Typing effect cursor ---- */
+.typing-cursor {
+    display: inline-block;
+    width: 3px;
+    background-color: #d92cf9;
+    margin-left: 3px;
+    vertical-align: middle;
+    height: 0.85em;
+    border-radius: 2px;
+    animation: blink-cursor 0.75s step-end infinite;
+}
+@keyframes blink-cursor {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* ---- Current company badge ---- */
+.current-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #d92cf9, #b636ff);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-left: 8px;
+    vertical-align: middle;
+    animation: badge-pulse 2s ease-in-out infinite;
+}
+@keyframes badge-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(182, 54, 255, 0.5); }
+    50% { box-shadow: 0 0 0 6px rgba(182, 54, 255, 0); }
+}
+
+/* ---- Tech stack tags on experience entries ---- */
+.tech-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 14px;
+}
+.tech-tag {
+    display: inline-block;
+    background: #f3e8ff;
+    color: #7c00d4;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid #d8b4fe;
+    letter-spacing: 0.2px;
+    transition: background 0.2s, color 0.2s;
+}
+.tech-tag:hover {
+    background: #b636ff;
+    color: #fff;
+    border-color: #b636ff;
+}
+.timeline-content.text-right .tech-tags {
+    justify-content: flex-end;
+}
+
+/* ---- Section fade-in scroll animation ---- */
+.fade-in-section {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.65s ease-out, transform 0.65s ease-out;
+}
+.fade-in-section.is-visible {
+    opacity: 1;
+    transform: none;
+}
+
+/* ---- Skill category label ---- */
+.skill-category-label {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #b636ff;
+    letter-spacing: 1px;
+    margin-bottom: 28px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #f0e0ff;
+}
+
+/* ---- Hero subtitle line height ---- */
+.header-text p {
+    line-height: 1.4;
+}
+
+/* ---- Amaris company highlight ---- */
+.company-amaris {
+    color: #d92cf9;
+    font-weight: 600;
+}
+
+/* ---- Experience entry subtle hover ---- */
+.single-timeline-box {
+    transition: transform 0.2s ease;
+}
+.single-timeline-box:hover {
+    transform: translateY(-3px);
+}
+
+/*========================End Enhancements==========

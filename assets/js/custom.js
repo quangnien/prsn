@@ -113,17 +113,85 @@ $(document).ready(function(){
 
     // 5. welcome animation support
 
-        $(window).load(function(){
+        $(window).on('load', function(){
         	$(".header-text h2,.header-text p").removeClass("animated fadeInUp").css({'opacity':'0'});
             $(".header-text a").removeClass("animated fadeInDown").css({'opacity':'0'});
         });
 
-        $(window).load(function(){
+        $(window).on('load', function(){
         	$(".header-text h2,.header-text p").addClass("animated fadeInUp").css({'opacity':'0'});
             $(".header-text a").addClass("animated fadeInDown").css({'opacity':'0'});
         });
 
-});	
+});
+
+// 6. Auto-update footer copyright year
+(function () {
+    var el = document.getElementById('footer-year');
+    if (el) el.textContent = new Date().getFullYear();
+}());
+
+// 7. Typing effect for hero subtitle
+(function () {
+    var phrases = [
+        'Java Back-End Developer',
+        'Software Engineer',
+        'Fintech Developer',
+        'Spring Boot Specialist'
+    ];
+    var phraseIndex = 0;
+    var charIndex = 0;
+    var isDeleting = false;
+    var typingEl = document.getElementById('typing-text');
+
+    function typeEffect() {
+        if (!typingEl) return;
+        var current = phrases[phraseIndex];
+
+        if (isDeleting) {
+            typingEl.textContent = current.substring(0, charIndex - 1);
+            charIndex--;
+        } else {
+            typingEl.textContent = current.substring(0, charIndex + 1);
+            charIndex++;
+        }
+
+        var delay = isDeleting ? 45 : 95;
+
+        if (!isDeleting && charIndex === current.length) {
+            delay = 2200;
+            isDeleting = true;
+        } else if (isDeleting && charIndex === 0) {
+            isDeleting = false;
+            phraseIndex = (phraseIndex + 1) % phrases.length;
+            delay = 400;
+        }
+
+        setTimeout(typeEffect, delay);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        setTimeout(typeEffect, 800);
+    });
+}());
+
+// 8. Section fade-in on scroll (IntersectionObserver)
+document.addEventListener('DOMContentLoaded', function () {
+    var sections = document.querySelectorAll('.fade-in-section');
+    if ('IntersectionObserver' in window) {
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.12 });
+        sections.forEach(function (s) { observer.observe(s); });
+    } else {
+        sections.forEach(function (s) { s.classList.add('is-visible'); });
+    }
+});
 	
 
 // JavaScript for PDF View
