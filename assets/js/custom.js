@@ -71,44 +71,7 @@ $(document).ready(function(){
 			});
 		}
 	
-	// 4. owl carousel
-	
-		// i. client (carousel)
-		
-			$('#client').owlCarousel({
-				items:7,
-				loop:true,
-				smartSpeed: 1000,
-				autoplay:true,
-				dots:false,
-				autoplayHoverPause:true,
-				responsive:{
-						0:{
-							items:2
-						},
-						415:{
-							items:2
-						},
-						600:{
-							items:4
-
-						},
-						1199:{
-							items:4
-						},
-						1200:{
-							items:7
-						}
-					}
-				});
-				
-				
-				$('.play').on('click',function(){
-					owl.trigger('play.owl.autoplay',[1000])
-				})
-				$('.stop').on('click',function(){
-					owl.trigger('stop.owl.autoplay')
-				})
+	// 4. owl carousel (inactive — client section hidden)
 
 
     // 5. welcome animation support
@@ -194,47 +157,71 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 	
 
-// JavaScript for PDF View
-function viewPDF() {
-	document.getElementById("pdf-frame").src = "assets/download/CV_MIDDLE_JAVA_NGUYENQUANGNIEN.pdf";
-	document.getElementById("pdf-viewer").style.display = "flex"; // Show PDF viewer
-  
-	document.getElementById("btn-view").style.display = "none"; // Hide View CV button
-	document.getElementById("btn-close").style.display = "inline-block"; // Show Close CV button
-}
-  
-function closePDF() {
-	document.getElementById("pdf-viewer").style.display = "none"; // Hide PDF viewer
-	document.getElementById("pdf-frame").src = ""; // Reset PDF to avoid loading issues
+// PDF Viewer
+(function () {
+    var CV_SRC = "assets/download/CV_MIDDLE_JAVA_NGUYENQUANGNIEN.pdf";
 
-	document.getElementById("btn-close").style.display = "none"; // Hide Close CV button
-	document.getElementById("btn-view").style.display = "inline-block"; // Show View CV button
-}
-  
-  // SENT EMAIL.
-document.querySelector("form").addEventListener("submit", function(event) {
-	event.preventDefault(); // Prevent default form submission
-	var form = this;
-	var messageDiv = document.getElementById("form-message");
-  
-	fetch(form.action, {
-		method: "POST",
-		body: new FormData(form),
-		headers: { "Accept": "application/json" }
-	}).then(response => {
-		if (response.ok) {
-			messageDiv.textContent = "✅ Your message has been sent successfully!";
-			messageDiv.className = "success-message";
-			form.reset(); // Reset form fields
-		} else {
-			messageDiv.textContent = "❌ Oops! Something went wrong. Please try again.";
-			messageDiv.className = "error-message";
-		}
-	}).catch(error => {
-		messageDiv.textContent = "❌ Error: " + error;
-		messageDiv.className = "error-message";
-	});
-  
-	messageDiv.style.display = "block"; // Show message
+    function showPDF() {
+        document.getElementById("pdf-frame").src = CV_SRC;
+        document.getElementById("pdf-viewer").style.display = "flex";
+        document.getElementById("btn-view").style.display = "none";
+        document.getElementById("btn-close").style.display = "inline-block";
+    }
+
+    function hidePDF() {
+        document.getElementById("pdf-viewer").style.display = "none";
+        document.getElementById("pdf-frame").src = "";
+        document.getElementById("btn-close").style.display = "none";
+        document.getElementById("btn-view").style.display = "inline-block";
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var btnView  = document.getElementById("btn-view");
+        var btnClose = document.getElementById("btn-close");
+        if (btnView)  btnView.addEventListener("click", showPDF);
+        if (btnClose) btnClose.addEventListener("click", hidePDF);
+
+        // Close PDF with Escape key
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") hidePDF();
+        });
+    });
+}());
+
+// Contact form via Formspree
+document.addEventListener("DOMContentLoaded", function () {
+    var contactForm = document.querySelector("#contact form");
+    if (!contactForm) return;
+
+    contactForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        var form = this;
+        var messageDiv = document.getElementById("form-message");
+        var submitBtn  = form.querySelector("button[type='submit']");
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Sending…";
+
+        fetch(form.action, {
+            method: "POST",
+            body: new FormData(form),
+            headers: { "Accept": "application/json" }
+        }).then(function (response) {
+            if (response.ok) {
+                messageDiv.textContent = "Your message has been sent successfully. I'll get back to you soon!";
+                messageDiv.className = "success-message";
+                form.reset();
+            } else {
+                messageDiv.textContent = "Oops! Something went wrong. Please try again or email me directly.";
+                messageDiv.className = "error-message";
+            }
+        }).catch(function () {
+            messageDiv.textContent = "Network error — please check your connection and try again.";
+            messageDiv.className = "error-message";
+        }).finally(function () {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Send Message";
+        });
+    });
 });
   

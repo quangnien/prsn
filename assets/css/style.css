@@ -23,6 +23,37 @@ font-family: 'Poppins', sans-serif;
 11. Contact
 
 /*-------------------------------------
+		0. Design tokens
+--------------------------------------*/
+:root {
+    --color-primary:        #d92cf9;
+    --color-primary-dark:   #b636ff;
+    --color-primary-darker: #9f00ff;
+    --color-navy:           #1f2c6c;
+    --color-text:           #43485c;
+    --color-text-muted:     #999fb3;
+    --color-text-secondary: #636a82;
+    --color-border:         #e5ebf2;
+    --color-bg-light:       #f9fbfd;
+    --shadow-sm:  0 3px 15px rgba(0,0,0,.2);
+    --shadow-md:  0 5px 20px rgba(0,0,0,.2);
+    --transition: 0.3s ease;
+}
+
+/* Screen-reader-only utility */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/*-------------------------------------
 		1.General css (Reset code)
 --------------------------------------*/
 *{
@@ -104,7 +135,6 @@ html,body{
     position: relative;
     z-index: 9999;
 }
-@media (min-width: 1024px){}
 nav.navbar.bootsnav.no-background {
     background-color: #fff;
     border: none;
@@ -155,16 +185,9 @@ nav.navbar.bootsnav ul.nav > li.dropdown span {
 
 
 /*.menu-ui-design*/
-.menu-ui-design{overflow-y:scroll;height: 350px;}
-.menu-ui-design::-webkit-scrollbar {
-    width:5px;
-}
-.menu-ui-design::-webkit-scrollbar-track {
-    -webkit-box-shadow: inset 0 0 8px #000;
-}
-.menu-ui-design::-webkit-scrollbar-thumb {
-  background-color: #d92cf9;
-}
+.menu-ui-design::-webkit-scrollbar { width: 5px; }
+.menu-ui-design::-webkit-scrollbar-track { -webkit-box-shadow: inset 0 0 8px #000; }
+.menu-ui-design::-webkit-scrollbar-thumb { background-color: var(--color-primary); }
 /*.menu-ui-design*/
 
 
@@ -217,11 +240,11 @@ nav.navbar.bootsnav .navbar-toggle i{color: #d92cf9;}
 .header-text h2 span {color: #d92cf9;}
 .header-text p {
     color: #fff;
-    font-size: 20px;
+    font-size: 30px;
     font-weight: 300;
     text-transform: uppercase;
     margin: 30px 0 60px;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
 }
 .header-text a {
     width: 200px;
@@ -253,7 +276,6 @@ nav.navbar.bootsnav .navbar-toggle i{color: #d92cf9;}
     color: #3c4258;
     text-transform: initial;
     line-height: 1.8;
-    /* NIENNQ ==> editted (at 2025-02-28) */
     text-align: justify;
 }
 .single-about-txt p {
@@ -261,7 +283,6 @@ nav.navbar.bootsnav .navbar-toggle i{color: #d92cf9;}
     color: #999fb3;
     padding: 35px 0 43px;
     border-bottom: 1px solid #999fb3;
-    /* NIENNQ ==> editted (at 2025-02-28) */
     text-align: justify;
 }
 .single-about-add-info {
@@ -288,7 +309,6 @@ nav.navbar.bootsnav .navbar-toggle i{color: #d92cf9;}
 }
 .single-about-img img {
     max-width: 500px;
-    /* height: 468px; NIENNQ ==> editted (at 2025-02-28) */
     height: auto;
 }
 .about-list-icon{
@@ -306,26 +326,24 @@ nav.navbar.bootsnav .navbar-toggle i{color: #d92cf9;}
 .about-list-icon ul {
     display: flex;
 }
-.about-list-icon  ul li a {
-    padding-right: 22px;
-    cursor:pointer;
-    color: #fff;
-}
 .about-list-icon ul li a {
     cursor: pointer;
     color: #fff;
     display: inline-block;
-    border: 2px solid;
+    border: 2px solid rgba(255,255,255,0.6);
     margin-left: 20px;
     border-radius: 8px;
-    width: 30px;
-    height: 30px;
-    line-height: 28px;
+    width: 34px;
+    height: 34px;
+    line-height: 30px;
     text-align: center;
+    transition: border-color 0.2s, background 0.2s;
 }
-.about-list-icon ul li a i {
-    margin-left: 6px;
+.about-list-icon ul li a:hover {
+    border-color: #fff;
+    background: rgba(255,255,255,0.15);
 }
+.about-list-icon ul li a i { margin-left: 0; }
 /*.ab-list-icon */
 
 /*.single-about-img */
@@ -507,7 +525,6 @@ span.single-timeline-horizontal.spacial-horizontal-line {width: 88px;}
     font-size: 14px;
     color: #999fb3;
 }
-/* niennq (2025-03-02) */
 .main-timeline .description-justify {
     font-size: 14px;
     color: #999fb3;
@@ -676,7 +693,6 @@ span.single-timeline-horizontal.spacial-horizontal-line {width: 88px;}
     font-size: 14px;
     text-align: center;
 }
-/* niennq (2025-03-04) */
 .isotope-overlay p {
     display: inline-block;
     color: #fff;
@@ -889,9 +905,21 @@ span.single-timeline-horizontal.spacial-horizontal-line {width: 88px;}
     margin-top: 20px;
 }
 
-/* View CV Button - Emerald Green */
+/* Hide Close button by default — JS toggles it */
+#btn-close { display: none; }
+
+/* PDF viewer panel */
+#pdf-viewer {
+    display: none;
+    margin-top: 16px;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,.4);
+}
+
+/* View CV Button */
 .btn-view {
-    background-color: #FFC107; /* Emerald Green */
+    background-color: var(--color-primary-dark);
     color: white;
     border: none;
     padding: 12px 24px;
@@ -904,7 +932,7 @@ span.single-timeline-horizontal.spacial-horizontal-line {width: 88px;}
 }
 
 .btn-view:hover {
-    background-color: #E0A800; /* Darker Green */
+    background-color: var(--color-primary-darker);
     transform: scale(1.05);
     box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
 }
@@ -1035,9 +1063,9 @@ span.single-timeline-horizontal.spacial-horizontal-line {width: 88px;}
     display: inline-block;
     width: 3px;
     background-color: #d92cf9;
-    margin-left: 3px;
+    margin-left: 4px;
     vertical-align: middle;
-    height: 0.85em;
+    height: 1em;
     border-radius: 2px;
     animation: blink-cursor 0.75s step-end infinite;
 }
@@ -1134,6 +1162,51 @@ span.single-timeline-horizontal.spacial-horizontal-line {width: 88px;}
 }
 .single-timeline-box:hover {
     transform: translateY(-3px);
+}
+
+/* ---- Section heading accent underline ---- */
+.section-heading h2 {
+    position: relative;
+    display: inline-block;
+}
+.section-heading h2::after {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 3px;
+    background: linear-gradient(to right, var(--color-primary), var(--color-primary-dark));
+    border-radius: 2px;
+    margin: 14px auto 0;
+}
+
+/* ---- Keyboard focus styles ---- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+}
+
+/* ---- Contact form focus highlight ---- */
+.contact-form .form-control:focus {
+    border-color: var(--color-primary-dark);
+    box-shadow: 0 0 0 3px rgba(182, 54, 255, 0.15);
+}
+
+/* ---- Social icon hover (about panel) ---- */
+.about-list-icon ul li a:hover i { color: var(--color-primary); }
+
+/* ---- Nav active link dot indicator ---- */
+nav.navbar.bootsnav ul.nav > li.active > a::after {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 4px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    margin: 2px auto 0;
 }
 
 /*========================End Enhancements==========

@@ -110,13 +110,13 @@
 							<h2>hi <span>,</span> i am <br> Thomas Nguyen.<br> <span></span>   </h2>
 							<p><span id="typing-text">Java Back-End Developer</span><span class="typing-cursor"></span></p>
 							<div class="btn-container">
-								<button id="btn-view" class="btn-view" onclick="viewPDF()">View CV</button>
-								<button id="btn-close" class="btn-close" onclick="closePDF()" style="display: none;">Close CV</button>
+								<button id="btn-view" class="btn-view">View CV</button>
+								<button id="btn-close" class="btn-close">Close CV</button>
 								<a href="assets/download/CV_MIDDLE_JAVA_NGUYENQUANGNIEN.pdf" download class="btn-download">Download CV</a>
 							</div>
 							
-							<div id="pdf-viewer" style="display: none; margin-top: 10px;">
-								<iframe id="pdf-frame" src="" width="100%" height="500px"></iframe>
+							<div id="pdf-viewer">
+								<iframe id="pdf-frame" src="" width="100%" height="500px" title="Thomas Nguyen — CV"></iframe>
 							</div>
 						</div><!--/.header-text-->
 					</div><!--/.col-->
@@ -125,8 +125,6 @@
 
 		</section><!--/.welcome-hero-->
 		<!--welcome-hero end -->
-
-		<!-- Fullscreen PDF Viewer (Hidden by Default) -->
 
 
 		<!--about start -->
@@ -253,11 +251,11 @@
 								<div class="timeline">
 									<div class="timeline-content">
 										<h4 class="title">
-											Major in mathematics.
+											Mathematics — Gifted Programme
 										</h4>
-										<h5>Phan Rang city, Ninh Thuan province, Viet Nam.</h5>
+										<h5>Phan Rang city, Ninh Thuan province, Vietnam.</h5>
 										<p class="description">
-											Major: major in mathematics.
+											Specialisation: Mathematics.
 										</p>
 									</div><!--/.timeline-content-->
 								</div><!--/.timeline-->
@@ -288,30 +286,6 @@
 								</div><!--/.timeline-->
 							</div>
 						</div>
-						<!-- <div class="col-sm-4">
-							<div class="single-horizontal-timeline">
-								<div class="experience-time">
-									<h2>2004 - 2008</h2>
-									<h3>bachelor <span>of </span> creative design</h3>
-								</div>
-								<div class="timeline-horizontal-border">
-									<i class="fa fa-circle" aria-hidden="true"></i>
-									<span class="single-timeline-horizontal spacial-horizontal-line
-									"></span>
-								</div>
-								<div class="timeline">
-									<div class="timeline-content">
-										<h4 class="title">
-											university of bolton
-										</h4>
-										<h5>bolton, united kingdome</h5>
-										<p class="description">
-											Duis aute irure dolor in reprehenderit in vol patate velit esse cillum dolore eu fugiat nulla pari. Excepteur sint occana inna tecat cupidatat non proident. 
-										</p>
-									</div>
-								</div>
-							</div>
-						</div> -->
 					</div>
 				</div>
 			</div>
@@ -748,144 +722,12 @@
 		</section><!--/.experience-->
 		<!--experience end -->
 
-		<!--profiles start -->
-		<!-- <section id="profiles" class="profiles">
-			<div class="profiles-details">
-				<div class="section-heading text-center">
-					<h2>profiles</h2>
-				</div>
-				<div class="container">
-					<div class="profiles-content">
-						<div class="row">
-							<div class="col-sm-3">
-								<div class="single-profile">
-									<div class="profile-txt">
-										<a href=""><i class="flaticon-themeforest"></i></a>
-										<div class="profile-icon-name">themeforest</div>
-									</div>
-									<div class="single-profile-overlay">
-										<div class="profile-txt">
-											<a href=""><i class="flaticon-themeforest"></i></a>
-											<div class="profile-icon-name">themeforest</div>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div class="col-sm-3">
-								<div class="single-profile">
-									<div class="profile-txt">
-										<a href=""><i class="flaticon-dribbble"></i></a>
-										<div class="profile-icon-name">dribbble</div>
-									</div>
-									<div class="single-profile-overlay">
-										<div class="profile-txt">
-											<a href=""><i class="flaticon-dribbble"></i></a>
-											<div class="profile-icon-name">dribbble</div>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div class="col-sm-3">
-								<div class="single-profile">
-									<div class="profile-txt">
-										<a href=""><i class="flaticon-behance-logo"></i></a>
-										<div class="profile-icon-name">behance</div>
-									</div>
-									<div class="single-profile-overlay">
-										<div class="profile-txt">
-											<a href=""><i class="flaticon-behance-logo"></i></a>
-											<div class="profile-icon-name">behance</div>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div class="col-sm-3">
-								<div class="single-profile profile-no-border">
-									<div class="profile-txt">
-										<a href=""><i class="flaticon-github-logo"></i></a>
-										<div class="profile-icon-name">github</div>
-									</div>
-									<div class="single-profile-overlay">
-										<div class="profile-txt">
-											<a href=""><i class="flaticon-github-logo"></i></a>
-											<div class="profile-icon-name">github</div>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="profile-border"></div>
-						<div class="row">
-							<div class="col-sm-3">
-								<div class="single-profile">
-									<div class="profile-txt">
-										<a href=""><i class="flaticon-flickr-website-logo-silhouette"></i></a>
-										<div class="profile-icon-name">flickR</div>
-									</div>
-									<div class="single-profile-overlay">
-										<div class="profile-txt">
-											<a href=""><i class="flaticon-flickr-website-logo-silhouette"></i></a>
-											<div class="profile-icon-name">flickR</div>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div class="col-sm-3">
-								<div class="single-profile">
-									<div class="profile-txt">
-										<a href=""><i class="flaticon-smug"></i></a>
-										<div class="profile-icon-name">smungMung</div>
-									</div>
-									<div class="single-profile-overlay">
-										<div class="profile-txt">
-											<a href=""><i class="flaticon-smug"></i></a>
-											<div class="profile-icon-name">smungMung</div>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div class="col-sm-3">
-								<div class="single-profile">
-									<div class="profile-txt">
-										<a href=""><i class="flaticon-squarespace-logo"></i></a>
-										<div class="profile-icon-name">squareSpace</div>
-									</div>
-									<div class="single-profile-overlay">
-										<div class="profile-txt">
-											<a href=""><i class="flaticon-squarespace-logo"></i></a>
-											<div class="profile-icon-name">squareSpace</div>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div class="col-sm-3">
-								<div class="single-profile profile-no-border">
-									<div class="profile-txt">
-										<a href=""><i class="flaticon-bitbucket-logotype-camera-lens-in-perspective"></i></a>
-										<div class="profile-icon-name">bitBucket</div>
-									</div>
-									<div class="single-profile-overlay">
-										<div class="profile-txt">
-											<a href=""><i class="flaticon-bitbucket-logotype-camera-lens-in-perspective"></i></a>
-											<div class="profile-icon-name">bitBucket</div>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-
-		</section> -->
-		<!--/.profiles-->
-		<!--profiles end -->
 
 		<!--portfolio start -->
 		<section id="portfolio" class="portfolio">
 			<div class="portfolio-details">
 				<div class="section-heading text-center fade-in-section">
-					<h2>My Blog</h2>
+					<h2>blog</h2>
 				</div>
 				<div class="container">
 					<div class="portfolio-content">
@@ -974,146 +816,12 @@
 		
 							</div><!-- /.row -->
 
-							<!-- <div class="row">
-		
-								<div class="col-sm-4">
-									<div class="item">
-										<img src="assets/images/portfolio/blog-home.jpg" alt="My family went to Vung Tau"/>
-										<div class="isotope-overlay">
-											<p>My family went to Vung Tau</p>
-										</div>
-										<div class="portfolio-description">
-											<h3>My family went to Vung Tau</h3>
-											<p>My family went to Vung Tau.</p>
-											<span class="date">July 15, 2023</span>
-										</div>
-									</div>
-		
-									<div class="item">
-										<img src="assets/images/portfolio/blog-tn-nien-love.jpg" alt="nien's graduation with love"/>
-										<div class="isotope-overlay">
-											<p>nien's graduation with love</p>
-										</div>
-										<div class="portfolio-description">
-											<h3>nien's graduation with love</h3>
-											<p>nien's graduation with love.</p>
-											<span class="date">Sept. 10, 2023</span>
-										</div>
-									</div>
-								</div>
-		
-								<div class="col-sm-4">
-
-									<div class="item">
-										<img src="assets/images/portfolio/blog-tn-ttc.jpg" alt="nien's graduation with TTC"/>
-										<div class="isotope-overlay">
-											<p>nien's graduation with TTC</p>
-										</div>
-										<div class="portfolio-description">
-											<h3>nien's graduation with TTC</h3>
-											<p>nien's graduation with TTC.</p>
-											<span class="date">Aug. 20, 2023</span>
-										</div>
-									</div>
-
-									<div class="item">
-										<img src="assets/images/portfolio/blog-dalat-love.jpg" alt="DaLat with love"/>
-										<div class="isotope-overlay">
-											<p>DaLat with love</p>
-										</div>
-										<div class="portfolio-description">
-											<h3>DaLat with love</h3>
-											<p>DaLat with love.</p>
-											<span class="date">July 15, 2023</span>
-										</div>
-									</div>
-								</div>
-		
-								<div class="col-sm-4">
-									<div class="item">
-										<img src="assets/images/portfolio/blog-aodai-love.jpg" alt="Tet holiday with love"/>
-										<div class="isotope-overlay">
-											<p>Tet holiday with love</p>
-										</div>
-										<div class="portfolio-description">
-											<h3>Tet holiday with love</h3>
-											<p>Tet holiday with love ==> ao dai (traditional costumes of Vietnamese people).</p>
-											<span class="date">July 15, 2023</span>
-										</div>
-									</div>
-		
-									<div class="item">
-										<img src="assets/images/portfolio/blog-aodai-love-2.jpg" alt="Tet holiday with love"/>
-										<div class="isotope-overlay">
-											<p>Tet holiday with love</p>
-										</div>
-										<div class="portfolio-description">
-											<h3>Tet holiday with love</h3>
-											<p>Tet holiday with love ==> ao dai (traditional costumes of Vietnamese people).</p>
-											<span class="date">July 10, 2023</span>
-										</div>
-									</div>
-								</div>
-		
-							</div> -->
-							<!-- /.row -->
 						</div><!--/.isotope-->
 					</div><!--/.gallery-content-->
 				</div><!--/.container-->
 			</div><!--/.portfolio-details-->
 		</section><!--/.portfolio-->
 
-		<!--clients start -->
-		<!-- <section id="clients" class="clients">
-			<div class="section-heading text-center">
-				<h2>clients</h2>
-			</div>
-			<div class="clients-area">
-				<div class="container">
-					<div class="owl-carousel owl-theme" id="client">
-						<div class="item">
-							<a href="#">
-								<img src="assets/images/clients/c1.png" alt="brand-image" />
-							</a>
-						</div>
-						<div class="item">
-							<a href="#">
-								<img src="assets/images/clients/c2.png" alt="brand-image" />
-							</a>
-						</div>
-						<div class="item">
-							<a href="#">
-								<img src="assets/images/clients/c3.png" alt="brand-image" />
-							</a>
-						</div>
-						<div class="item">
-							<a href="#">
-								<img src="assets/images/clients/c4.png" alt="brand-image" />
-							</a>
-						</div>
-						<div class="item">
-							<a href="#">
-								<img src="assets/images/clients/c5.png" alt="brand-image" />
-							</a>
-						</div>
-						<div class="item">
-							<a href="#">
-								<img src="assets/images/clients/c6.png" alt="brand-image" />
-							</a>
-						</div>
-						<div class="item">
-							<a href="#">
-								<img src="assets/images/clients/c7.png" alt="brand-image" />
-							</a>
-						</div>
-					</div>
-				</div>
-			</div>
-
-		</section>
-
-		</section> -->
-		<!--clients end -->
 
 		<!--contact start -->
 		<section id="contact" class="contact">
@@ -1126,22 +834,25 @@
 						<div class="col-md-offset-1 col-md-5 col-sm-6">
 							<div class="single-contact-box">
 								<div class="contact-form">
-									<form action="https://formspree.io/f/xeoegbbw" method="POST">
+									<form action="https://formspree.io/f/xeoegbbw" method="POST" novalidate>
 										<div class="row">
 											<div class="col-sm-6 col-xs-12">
 												<div class="form-group">
-													<input type="text" class="form-control" id="name" placeholder="Name*" name="name" required>
+													<label for="name" class="sr-only">Name</label>
+													<input type="text" class="form-control" id="name" placeholder="Name*" name="name" required autocomplete="name">
 												</div>
 											</div>
 											<div class="col-sm-6 col-xs-12">
 												<div class="form-group">
-													<input type="email" class="form-control" id="email" placeholder="Email*" name="email" required>
+													<label for="email" class="sr-only">Email address</label>
+													<input type="email" class="form-control" id="email" placeholder="Email*" name="email" required autocomplete="email">
 												</div>
 											</div>
 										</div>
 										<div class="row">
 											<div class="col-sm-12">
 												<div class="form-group">
+													<label for="subject" class="sr-only">Subject</label>
 													<input type="text" class="form-control" id="subject" placeholder="Subject" name="subject">
 												</div>
 											</div>
@@ -1149,6 +860,7 @@
 										<div class="row">
 											<div class="col-sm-12">
 												<div class="form-group">
+													<label for="comment" class="sr-only">Message</label>
 													<textarea class="form-control" rows="8" id="comment" placeholder="Message" name="message" required></textarea>
 												</div>
 											</div>
@@ -1156,12 +868,12 @@
 										<div class="row">
 											<div class="col-sm-12">
 												<div class="single-contact-btn">
-													<button type="submit" class="contact-btn">Submit</button>
+													<button type="submit" class="contact-btn">Send Message</button>
 												</div>
 											</div>
 										</div>
 									</form>
-									<div id="form-message" class="hidden"></div>
+									<div id="form-message" role="alert" aria-live="polite"></div>
 
 									
 								</div><!--/.contact-form-->
@@ -1250,8 +962,6 @@
 		<script src="assets/js/jquery.js"></script>
         
         <!--modernizr.min.js-->
-		<!-- NIENNQ => edit link online to offline (2025-03-02) -->
-        <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script> -->
         <script src="assets/js/modernizr.js"></script>
 		
 		<!--bootstrap.min.js-->
@@ -1276,8 +986,6 @@
 		<!--owl.carousel.js-->
         <script src="assets/js/owl.carousel.min.js"></script>
 
-		<!-- NIENNQ => edit link online to offline (2025-03-02) -->
-		<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script> -->
 		<script src="assets/js/jquery.easing.js"></script>
 		
         <!--Custom JS-->
