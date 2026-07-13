@@ -1,0 +1,2362 @@
+# Nhập Môn Chứng Khoán & Quỹ Đầu Tư — Learning Page Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Turn `assets/download/nhap-mon-chung-khoan-quy-dau-tu.md` (a 1292-line Vietnamese finance/investing primer) into a single long-form learning page on the portfolio site, at `blog/nhap-mon-chung-khoan/index.html`, that teaches the same material through rich hand-rolled HTML/CSS diagrams, tables, worked numeric examples and interactive accordions — so a reader can *see* the concepts, not just read them.
+
+**Architecture:** One self-contained article page following the exact structural pattern already used by `blog/loose-coupling-spring-boot/index.html` and `blog/prompt-engineering-roadmap/index.html`: sticky nav + reading-progress bar → hero header → two-column layout (`.blog-article` + sticky `.blog-toc` sidebar) → fixed bottom prev/next nav → inline `<script>` for theme/TOC-scrollspy/reveal-animations. No new frameworks, no Mermaid.js, no external chart library — every diagram in the source markdown is re-expressed as static HTML using a small set of new reusable CSS diagram components appended to the **shared** `blog/blog.css` (the file already accumulates page-specific diagram classes like `.coupling-compare`, `.spring-phases`, `.dip-diagram` from earlier posts — this plan adds a finance-flavoured set the same way).
+
+**Tech Stack:** Plain HTML5 + CSS (existing design-token system in `blog/blog.css`) + vanilla JS (no build step, no dependencies). Font: Poppins (already loaded sitewide). No Prism.js needed (no code blocks in this content).
+
+## Global Constraints
+
+- Language: all visible content in Vietnamese (source doc is Vietnamese; keep it Vietnamese — this is a Vietnamese audience piece).
+- Do not claim 100% fidelity to the source doc — condense secondary prose while keeping every number, every table, every warning/callout, and a visual treatment for every diagram concept. This is explicitly allowed by the user.
+- Reuse `blog/blog.css` design tokens (`--bg`, `--primary` `#b636ff`, `--teal` `#00d4a0`, `--card-bg`, `--radius-md`, etc.) — do not hardcode new colors outside the existing palette except small semantic accents already used elsewhere in the file (`#ffbb33` warning amber, `#ff7070` danger red, `#38bdf8`/`#4db8ff` info blue).
+- No Mermaid.js, no chart.js/d3 — all diagrams are static HTML/CSS (conic-gradient for the one donut chart, CSS grid/flex for everything else), matching the existing site's convention.
+- Follow the exact page skeleton (nav / hero / `.blog-layout` grid / TOC sidebar / fixed bottom nav / inline script) used by `blog/loose-coupling-spring-boot/index.html` — do not invent a different layout.
+- Every `<h2>` gets an `id` and a matching entry in `.toc-list`; every `<h3>` that represents a real subsection gets an `id` + `.toc-h3` entry (mirror the pattern in `blog/loose-coupling-spring-boot/index.html:1630-1649`).
+- Disclaimer content (educational only, not investment advice) from the source's opening and closing sections must be preserved in the TL;DR/reading-guide callouts and in the final callout — this is legally/ethically load-bearing, not filler.
+- Responsive: TOC sidebar hides below 900px (existing rule); any new multi-column diagram component must collapse to a single column below 600–700px, matching the existing `@media (max-width: 600px)` pattern for `.coupling-compare`.
+- Theme-aware: every new CSS component must work in both `data-theme="dark"` (default) and `data-theme="light"` using only the existing CSS custom properties — no new hardcoded dark-only colors.
+
+---
+
+## Context
+
+The user asked for a webpage version of `assets/download/nhap-mon-chung-khoan-quy-dau-tu.md` — a from-zero primer on investing in the Vietnamese stock market (inflation/compound interest → market structure → stocks/bonds/funds → fundamental & technical analysis → risk/psychology/scams → tax → a 30-day action plan → glossary). The doc is written for *reading*; the request is for something built for *learning* — diagrams and worked examples the reader can look at and immediately picture, not just prose to parse. It should not necessarily mirror 100% of the source text, but should carry all the teaching content, using images/diagrams to make it easy to visualize.
+
+The repo already has a working template for exactly this kind of content: three prior long-form technical posts (`loose-coupling-spring-boot`, `prompt-engineering-roadmap`, `docker-toan-tap`) that solved the "long educational article with diagrams" problem using pure HTML/CSS diagram components layered onto a shared `blog/blog.css`, plus a sticky TOC, reading-progress bar, and scroll-spy — all with no external diagram library. This plan re-uses that machinery and extends it with a handful of new generic diagram components (decision tree, org/flow map, cash-flow timeline, bar chart, donut chart, FAQ accordion) so every mermaid/ASCII diagram in the source markdown gets a real visual instead of a text dump.
+
+---
+
+## File Structure
+
+- **Create** `blog/nhap-mon-chung-khoan/index.html` — the entire article (single file, matching the one-file-per-post convention already used by every other post).
+- **Modify** `blog/blog.css` — append ~6 new reusable diagram component blocks at the end of the file (after the existing `.circular-dep` block), following the file's established convention of accumulating diagram CSS contributed by each post.
+- **Modify** `blog/index.html` — add one new `.blog-card` at the top of `.blog-grid` linking to the new post (newest-first ordering, matching current date).
+- No new JS files — one inline `<script>` block at the bottom of the new page, copied/extended from `blog/loose-coupling-spring-boot/index.html:1675-1748` (theme toggle, reading-progress, TOC scroll-spy, `IntersectionObserver` reveal for flow/decision diagrams) plus one small addition: a glossary live-filter.
+
+---
+
+## Reusable Diagram Components (added once in Task 2, used throughout)
+
+These replace every mermaid `flowchart`/`sequenceDiagram`/`pie` and ASCII diagram in the source:
+
+| Source diagram type | Component used | New or existing? |
+|---|---|---|
+| ASCII candlestick / order-book / Fibonacci art | `.diagram-box` + `<pre>` | existing (blog.css:490-507), gets one small addition (`pre` reset) |
+| T+2 settlement sequence, 30-day plan weeks | `.spring-phases` (numbered vertical timeline) | existing (blog.css:1122-1206) |
+| Personal-finance gate, stock-vs-fund tree, scam filter, 6-month roadmap | `.decision-tree` | **new** |
+| Market structure org chart, fund structure org chart | `.org-map` | **new** |
+| Primary/secondary market, active/passive funds, open/closed/ETF, rate-up/rate-down | `.compare-grid` (2–3 col) | **new** |
+| Bond cash-flow timeline | `.cashflow-timeline` | **new** |
+| Loss→required-gain asymmetry | `.bar-chart` | **new** |
+| Portfolio allocation pie | `.donut-chart` + legend | **new** |
+| Emotional cycle loop | `.flow-diagram`/`.flow-step-card` | existing (blog.css:869-1026), reused with new content |
+| FAQ (11.5), 13-question self-test | `<details class="faq-item">` | **new** (accordion, no JS needed) |
+| Every comparison/reference table | `.blog-table` | existing |
+| 7-question pre-buy checklist | `.self-check` | existing |
+| Warnings/tips/TL;DR | `.callout` (tldr/info/warn/success) | existing |
+| Advanced asides ("🔬 Deep Dive") | `.deep-dive` | existing |
+| Sources list | `.references` | existing |
+
+---
+
+## Task 1: Page skeleton + blog listing entry
+
+**Files:**
+- Create: `blog/nhap-mon-chung-khoan/index.html` (skeleton only — head, nav, hero, empty layout shell, TOC shell, bottom nav, base script)
+- Modify: `blog/index.html`
+
+**Interfaces:**
+- Produces: the DOM shell every later task appends `<h2 id="...">…</h2>` sections into, right after the reading-guide callout inside `<article class="blog-article">`.
+- Produces: `.toc-list` `<ul>` (initially only has entries for sections added so far — each later task appends its own `<li>`s).
+
+- [ ] **Step 1: Create the directory and skeleton file**
+
+```html
+<!doctype html>
+<html lang="vi" data-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nhập Môn Chứng Khoán & Quỹ Đầu Tư — Cẩm Nang Cho Người Mới | Thomas Nguyen</title>
+    <meta name="description" content="Cẩm nang nhập môn chứng khoán và quỹ đầu tư tại Việt Nam: lạm phát, lãi kép, cổ phiếu, trái phiếu, chứng chỉ quỹ, phân tích cơ bản & kỹ thuật, quản trị rủi ro, thuế phí và lộ trình 30 ngày — minh họa bằng sơ đồ trực quan.">
+    <meta name="author" content="Thomas Nguyen">
+    <meta property="og:title" content="Nhập Môn Chứng Khoán & Quỹ Đầu Tư — Cẩm Nang Cho Người Mới">
+    <meta property="og:description" content="Từ lạm phát & lãi kép đến cổ phiếu, trái phiếu, quỹ đầu tư, phân tích cơ bản/kỹ thuật, quản trị rủi ro, thuế phí và kế hoạch 30 ngày — minh họa bằng sơ đồ.">
+    <meta property="og:type" content="article">
+    <link rel="shortcut icon" type="image/png" href="../../assets/logo/man.png"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../blog.css">
+</head>
+<body>
+<div class="mesh-bg"></div>
+<div id="reading-progress"></div>
+
+<!-- Nav -->
+<nav class="blog-nav">
+    <a href="../../index.html" class="blog-nav-brand">Thomas<span>.</span>dev</a>
+    <ul class="blog-nav-links">
+        <li><a href="../../index.html">Portfolio</a></li>
+        <li class="active"><a href="../index.html">Blog</a></li>
+        <li><a href="../../index.html#contact">Contact</a></li>
+        <li>
+            <button class="theme-pill-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+                <div class="theme-pip"></div>
+                <span id="theme-label">Dark</span>
+            </button>
+        </li>
+    </ul>
+</nav>
+
+<!-- Post Hero -->
+<header class="blog-hero">
+    <div class="blog-hero-inner">
+        <div>
+            <span class="post-tag">Tài chính cá nhân</span>
+            <span class="post-tag tag-teal">Chứng khoán</span>
+            <span class="post-tag">Quỹ đầu tư</span>
+            <span class="post-tag">Nhập môn</span>
+        </div>
+        <h1 class="post-title">📘 Nhập Môn Chứng Khoán & Quỹ Đầu Tư — Cẩm Nang Cho Người Mới Bắt Đầu</h1>
+        <p class="post-subtitle">Lạm phát & lãi kép · Cổ phiếu · Trái phiếu · Quỹ đầu tư · Phân tích cơ bản/kỹ thuật · Rủi ro & tâm lý · Thuế phí · Lộ trình 30 ngày — minh họa bằng sơ đồ trực quan</p>
+        <div class="post-meta">
+            <span class="post-meta-item">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                ~55 min read
+            </span>
+            <span class="post-meta-item">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                13 Jul 2026
+            </span>
+            <span class="post-meta-item post-meta-author">Thomas Nguyen</span>
+        </div>
+    </div>
+</header>
+
+<!-- Layout -->
+<div class="blog-layout">
+
+    <article class="blog-article">
+
+        <div class="callout callout-tldr">
+            <div class="callout-title">⚡ TL;DR</div>
+            <p>Tài liệu dạy bạn từ con số 0 về đầu tư tài chính tại Việt Nam: vì sao phải đầu tư (lạm phát + lãi kép), thị trường chứng khoán vận hành ra sao, cổ phiếu – trái phiếu – chứng chỉ quỹ khác nhau thế nào, cách đọc bảng giá và đặt lệnh, cách chọn quỹ đầu tư, các chỉ số phân tích cơ bản (P/E, P/B, ROE...), quản trị rủi ro – tâm lý – nhận diện lừa đảo, thuế & phí, và một lộ trình bắt đầu an toàn kèm kế hoạch hành động 30 ngày.</p>
+        </div>
+
+        <div class="callout callout-warn">
+            <div class="callout-title">⚖️ Miễn trừ trách nhiệm — đọc trước tiên</div>
+            <p>Đây là tài liệu <strong>giáo dục</strong>, không phải khuyến nghị đầu tư. Mọi tên cổ phiếu/quỹ xuất hiện chỉ để <strong>minh họa loại hình</strong>, không phải lời khuyên mua/bán. Trước khi đầu tư số tiền lớn, hãy tham khảo chuyên gia tư vấn tài chính có giấy phép. Số liệu quy định (thuế, biên độ, giờ giao dịch...) đúng tại thời điểm 07/2026 và có thể thay đổi — luôn kiểm tra lại nguồn chính thức (mục Nguồn tham khảo ở cuối bài).</p>
+        </div>
+
+        <div class="callout callout-info">
+            <div class="callout-title">📖 Cách đọc bài này</div>
+            <ul>
+                <li><strong>Lần đầu:</strong> đọc lướt toàn bộ, tập trung vào các <strong>sơ đồ</strong> và ví dụ bằng số — chúng được thiết kế để bạn "hình dung được ngay".</li>
+                <li><strong>Lần 2–3:</strong> đọc kỹ từng phần, đặc biệt các mục <span class="text-teal">🔬 Deep Dive</span>.</li>
+                <li><strong>Trước khi xuống tiền thật:</strong> đọc lại Phần 9 (Rủi ro), Phần 10 (Thuế & phí) và Phần 11 (Lộ trình bắt đầu).</li>
+            </ul>
+        </div>
+
+        <!-- SECTION_ANCHOR: further tasks insert <h2>...</h2> content here, in order -->
+
+        <div class="post-footer"></div>
+
+    </article>
+
+    <aside class="blog-toc" aria-label="Table of contents">
+        <div class="toc-title">Mục lục</div>
+        <ul class="toc-list">
+            <!-- TOC_ANCHOR: further tasks append <li> entries here, in order -->
+        </ul>
+    </aside>
+
+</div>
+
+<!-- Fixed bottom navigation -->
+<nav class="post-nav-fixed" aria-label="Post navigation">
+    <a href="../index.html" class="post-nav-fixed-btn">
+        <span class="pnf-icon">←</span>
+        <span class="pnf-text">
+            <span class="pnf-label">Back</span>
+            <span class="pnf-title">All Posts</span>
+        </span>
+    </a>
+    <a href="../prompt-engineering-roadmap/index.html" class="post-nav-fixed-btn" style="flex-direction:row-reverse;text-align:right">
+        <span class="pnf-icon">→</span>
+        <span class="pnf-text">
+            <span class="pnf-label">Next</span>
+            <span class="pnf-title">Prompt Engineering Roadmap</span>
+        </span>
+    </a>
+</nav>
+
+<script>
+    // ── Theme ──────────────────────────────────────────────────────────────
+    const saved = localStorage.getItem('blog-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    document.getElementById('theme-label').textContent = saved === 'dark' ? 'Dark' : 'Light';
+    function toggleTheme() {
+        const cur = document.documentElement.getAttribute('data-theme');
+        const next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('blog-theme', next);
+        document.getElementById('theme-label').textContent = next === 'dark' ? 'Dark' : 'Light';
+    }
+
+    // ── Reading progress bar ──────────────────────────────────────────────
+    const bar = document.getElementById('reading-progress');
+    window.addEventListener('scroll', () => {
+        const doc = document.documentElement;
+        const scrolled = doc.scrollTop;
+        const total = doc.scrollHeight - doc.clientHeight;
+        bar.style.width = (total > 0 ? (scrolled / total) * 100 : 0) + '%';
+    }, { passive: true });
+
+    // ── Flow / decision-tree staggered reveal ─────────────────────────────
+    const revealGroups = document.querySelectorAll('.flow-diagram, .decision-tree');
+    revealGroups.forEach(group => {
+        const steps = group.querySelectorAll('.flow-step, .dt-reveal');
+        if (!steps.length) return;
+        const obs = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    steps.forEach((step, i) => setTimeout(() => step.classList.add('visible'), i * 100));
+                    obs.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15 });
+        obs.observe(group);
+    });
+
+    // ── TOC active link ────────────────────────────────────────────────────
+    const tocLinks = document.querySelectorAll('.toc-list a');
+    const headings = Array.from(tocLinks)
+        .map(a => document.querySelector(a.getAttribute('href')))
+        .filter(Boolean);
+    const tocObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                tocLinks.forEach(a => a.classList.remove('active'));
+                const link = document.querySelector(`.toc-list a[href="#${entry.target.id}"]`);
+                if (link) link.classList.add('active');
+            }
+        });
+    }, { rootMargin: '-20% 0% -70% 0%' });
+    headings.forEach(h => tocObserver.observe(h));
+
+    // ── Glossary live filter (wired up once Task 15 adds #glossary-filter) ─
+    const glossaryFilter = document.getElementById('glossary-filter');
+    if (glossaryFilter) {
+        glossaryFilter.addEventListener('input', (e) => {
+            const q = e.target.value.trim().toLowerCase();
+            document.querySelectorAll('#glossary-table tbody tr').forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+            });
+        });
+    }
+</script>
+</body>
+</html>
+```
+
+- [ ] **Step 2: Add the new post card to the blog listing**
+
+Open `blog/index.html` and insert this new `<a class="blog-card">` as the **first** card inside `<main class="blog-grid">` (right after the opening `<main class="blog-grid">` tag, before the existing `prompt-engineering-roadmap` card):
+
+```html
+    <a href="nhap-mon-chung-khoan/index.html" class="blog-card">
+        <div class="blog-card-tags">
+            <span class="post-tag">Tài chính cá nhân</span>
+            <span class="post-tag tag-teal">Chứng khoán</span>
+            <span class="post-tag">Quỹ đầu tư</span>
+        </div>
+        <h2 class="blog-card-title">Nhập Môn Chứng Khoán & Quỹ Đầu Tư — Cẩm Nang Cho Người Mới</h2>
+        <p class="blog-card-excerpt">
+            Từ lạm phát & lãi kép, cách thị trường chứng khoán Việt Nam vận hành, cổ phiếu/trái phiếu/chứng
+            chỉ quỹ, phân tích cơ bản & kỹ thuật, đến quản trị rủi ro, tâm lý đầu tư, nhận diện lừa đảo,
+            thuế phí và lộ trình hành động 30 ngày — minh họa bằng sơ đồ trực quan, dễ hình dung.
+        </p>
+        <div class="blog-card-meta">
+            <span>
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                13 Jul 2026
+            </span>
+            <span>
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                ~55 min read
+            </span>
+            <span>Thomas Nguyen</span>
+        </div>
+        <span class="blog-card-arrow">→</span>
+    </a>
+```
+
+- [ ] **Step 3: Verify skeleton renders**
+
+Open `blog/nhap-mon-chung-khoan/index.html` directly in a browser (or via a local static server). Expected: nav bar, hero title, TL;DR/disclaimer/reading-guide callouts render correctly, empty TOC sidebar, fixed bottom nav with working "Back" link to `../index.html`. Confirm `blog/index.html` now shows the new card first in the grid and its link works.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add blog/nhap-mon-chung-khoan/index.html blog/index.html
+git commit -m "feat: scaffold nhap-mon-chung-khoan learning page"
+```
+
+---
+
+## Task 2: New diagram CSS components in `blog/blog.css`
+
+**Files:**
+- Modify: `blog/blog.css` (append after the `.circular-dep` block, i.e. after line 1362 / end of file)
+
+**Interfaces:**
+- Produces: `.decision-tree`/`.dt-*`, `.org-map`/`.org-*`/`.oversight-banner`, `.compare-grid`/`.compare-col*`, `.cashflow-timeline`/`.cf-*`, `.bar-chart`/`.bar-*`, `.donut-chart`/`.donut-*`, `.faq-item`, `.glossary-search`, and a `.diagram-box pre` reset — all classes consumed by Tasks 3–15.
+- Consumes: existing design tokens (`--primary`, `--teal`, `--card-bg`, `--glass2`, `--glass3`, `--border`, `--border2`, `--border3`, `--muted`, `--sub`, `--text`, `--radius-sm/md/lg`) already defined at the top of `blog/blog.css`.
+
+- [ ] **Step 1: Append the new component CSS**
+
+Add this block to the end of `blog/blog.css`:
+
+```css
+
+/* ─── DECISION TREE (branching flowchart) ────── */
+.decision-tree {
+    margin: 1.6rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+}
+.dt-node {
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    font-size: 0.86rem;
+    text-align: center;
+    max-width: 440px;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border2);
+    color: var(--text);
+}
+.dt-node--start { background: rgba(14,165,233,0.1); border-color: rgba(14,165,233,0.35); color: #4db8ff; }
+.dt-node--question { background: rgba(255,187,51,0.08); border-color: rgba(255,187,51,0.4); color: #ffbb33; border-radius: 99px; }
+.dt-node--success { background: var(--teal-dim); border-color: rgba(0,212,160,0.4); color: var(--teal); }
+.dt-node--warning { background: rgba(255,187,51,0.08); border-color: rgba(255,187,51,0.35); color: #ffbb33; }
+.dt-node--danger  { background: rgba(255,80,80,0.1); border-color: rgba(255,80,80,0.35); color: #ff7070; }
+.dt-connector { width: 2px; height: 22px; background: var(--border3); }
+.dt-branches {
+    display: flex;
+    gap: 22px;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+}
+.dt-branch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 170px;
+    max-width: 280px;
+    border-top: 2px solid var(--border3);
+    padding-top: 14px;
+    margin-top: 14px;
+}
+.dt-branch-label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 2px 12px;
+    border-radius: 99px;
+    margin-bottom: 8px;
+}
+.dt-branch-label--yes { background: var(--teal-dim); color: var(--teal); }
+.dt-branch-label--no  { background: rgba(255,80,80,0.1); color: #ff7070; }
+@media (max-width: 600px) {
+    .dt-branches { flex-direction: column; align-items: center; }
+    .dt-branch { max-width: 100%; }
+}
+
+/* ─── ORG / STRUCTURE MAP ─────────────────────── */
+.org-map {
+    margin: 1.6rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding: 22px 20px;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-md);
+}
+.org-node {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    background: var(--card-bg);
+    border: 1px solid var(--border2);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-align: left;
+    max-width: 460px;
+    color: var(--text);
+}
+.org-node--accent { border-color: rgba(182,54,255,0.4); }
+.org-node-icon { font-size: 1.15rem; flex-shrink: 0; }
+.org-node-sub { display: block; font-size: 0.72rem; font-weight: 500; color: var(--muted); margin-top: 2px; }
+.org-arrow-down { font-size: 1rem; color: var(--teal); margin: 4px 0; }
+.oversight-banner {
+    margin-top: 16px;
+    width: 100%;
+    max-width: 520px;
+    padding: 12px 18px;
+    border-radius: var(--radius-md);
+    background: rgba(255,187,51,0.07);
+    border: 1px dashed rgba(255,187,51,0.4);
+    font-size: 0.78rem;
+    color: #f0b93f;
+    text-align: center;
+    line-height: 1.6;
+}
+
+/* ─── COMPARE GRID (N-column comparison cards) ── */
+.compare-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin: 1.4rem 0;
+}
+.compare-grid--3 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 700px) {
+    .compare-grid, .compare-grid--3 { grid-template-columns: 1fr; }
+}
+.compare-col {
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--glass2);
+    border: 1px solid var(--border2);
+    border-left: 3px solid var(--border3);
+}
+.compare-col--a { border-left-color: var(--primary); }
+.compare-col--b { border-left-color: var(--teal); }
+.compare-col--warn { border-left-color: #ffbb33; }
+.compare-col-title { font-size: 0.82rem; font-weight: 800; letter-spacing: 0.3px; color: var(--text); }
+.compare-col p { font-size: 0.85rem; color: var(--sub); margin: 0; line-height: 1.6; }
+.compare-col ul { margin: 4px 0 0 1.1rem; padding: 0; }
+.compare-col li { font-size: 0.82rem; color: var(--sub); margin-bottom: 3px; }
+
+/* ─── CASHFLOW TIMELINE (horizontal) ──────────── */
+.cashflow-timeline {
+    margin: 1.8rem 0 1.4rem;
+    padding: 6px 24px 0;
+}
+.cf-track {
+    position: relative;
+    height: 2px;
+    background: var(--border3);
+}
+.cf-points {
+    display: flex;
+    justify-content: space-between;
+    margin-top: -1px;
+}
+.cf-point {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+    flex: 1;
+}
+.cf-point-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid var(--bg2);
+    margin-top: -6px;
+}
+.cf-point-year { font-size: 0.72rem; color: var(--muted); font-weight: 700; margin-top: 6px; }
+.cf-point-amt { font-size: 0.8rem; font-weight: 700; text-align: center; }
+.cf-point-amt--out { color: #ff7070; }
+.cf-point-amt--in  { color: var(--teal); }
+
+/* ─── BAR CHART (horizontal) ──────────────────── */
+.bar-chart { display: flex; flex-direction: column; gap: 10px; margin: 1.6rem 0; }
+.bar-row { display: grid; grid-template-columns: 120px 1fr 96px; align-items: center; gap: 10px; }
+.bar-label { font-size: 0.8rem; color: var(--sub); text-align: right; }
+.bar-track { background: var(--glass3); border-radius: 99px; height: 14px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--primary), var(--teal)); }
+.bar-value { font-size: 0.8rem; font-weight: 700; color: var(--text); }
+@media (max-width: 600px) { .bar-row { grid-template-columns: 92px 1fr 74px; } }
+
+/* ─── DONUT CHART ──────────────────────────────── */
+.donut-wrap { display: flex; align-items: center; gap: 28px; margin: 1.6rem 0; flex-wrap: wrap; justify-content: center; }
+.donut-chart { width: 160px; height: 160px; border-radius: 50%; position: relative; flex-shrink: 0; }
+.donut-chart::after { content: ''; position: absolute; inset: 24px; border-radius: 50%; background: var(--bg2); }
+.donut-legend { display: flex; flex-direction: column; gap: 9px; }
+.donut-legend-item { display: flex; align-items: center; gap: 9px; font-size: 0.85rem; color: var(--text); }
+.donut-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+/* ─── FAQ / QUIZ ACCORDION (native <details>) ─── */
+.faq-item {
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-md);
+    margin-bottom: 10px;
+    overflow: hidden;
+    background: var(--glass);
+}
+.faq-item summary {
+    padding: 14px 18px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--text);
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after {
+    content: '+';
+    font-size: 1.3rem;
+    color: var(--primary);
+    flex-shrink: 0;
+    transition: transform 0.25s ease;
+}
+.faq-item[open] summary::after { transform: rotate(45deg); }
+.faq-item-body { padding: 0 18px 16px; font-size: 0.85rem; color: var(--sub); line-height: 1.7; }
+.faq-item-body strong { color: var(--text); }
+
+/* ─── GLOSSARY SEARCH ──────────────────────────── */
+.glossary-search input {
+    width: 100%;
+    padding: 10px 16px;
+    border-radius: 99px;
+    background: var(--glass2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+}
+.glossary-search input:focus { outline: none; border-color: var(--primary); }
+.glossary-search input::placeholder { color: var(--muted); }
+
+/* ─── DIAGRAM BOX <pre> RESET (for ASCII art) ─── */
+.diagram-box pre {
+    margin: 0;
+    white-space: pre;
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    line-height: inherit;
+}
+```
+
+- [ ] **Step 2: Sanity check in devtools**
+
+Open any existing blog post (e.g. `blog/loose-coupling-spring-boot/index.html`) in a browser after the edit and confirm nothing broke (existing `.coupling-compare`, `.spring-phases` etc. still render identically) — this file is shared across all posts so a syntax error here breaks every post.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add blog/blog.css
+git commit -m "feat: add decision-tree, org-map, compare-grid, cashflow-timeline, bar-chart, donut-chart, faq diagram components"
+```
+
+---
+
+## Task 3: Section 1 — Vì sao phải đầu tư? (inflation, compound interest, foundation gate)
+
+**Files:**
+- Modify: `blog/nhap-mon-chung-khoan/index.html` — insert at `<!-- SECTION_ANCHOR -->`, append matching `<li>`s at `<!-- TOC_ANCHOR -->`
+
+**Interfaces:**
+- Consumes: `.callout`, `.blog-table`/`.blog-table-wrapper`, `.decision-tree`/`.dt-*` (from Task 2)
+- Produces: `<h2 id="s1">`, `<h3 id="s1-1">`, `<h3 id="s1-2">`, `<h3 id="s1-3">`, `<h3 id="s1-4">`
+
+- [ ] **Step 1: Insert Section 1 HTML**
+
+Replace `<!-- SECTION_ANCHOR: further tasks insert <h2>...</h2> content here, in order -->` with:
+
+```html
+        <h2 id="s1">1. Vì sao phải đầu tư? — Lạm phát và Lãi kép</h2>
+
+        <h3 id="s1-1">1.1. Tiền của bạn đang "bốc hơi" trong im lặng</h3>
+        <p>Trước khi học <em>cách</em> đầu tư, cần hiểu <em>tại sao</em> phải đầu tư. Câu trả lời nằm ở một "kẻ trộm vô hình" tên là <strong>lạm phát (inflation)</strong> — giá cả hàng hóa tăng dần theo thời gian khiến <strong>cùng một số tiền mua được ngày càng ít đồ hơn</strong>. Lạm phát Việt Nam thập kỷ qua bình quân quanh mức <strong>3–4%/năm</strong> — nhỏ mỗi năm, nhưng cộng dồn thì tàn phá:</p>
+
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Bạn giữ 100 triệu tiền mặt</th><th>Sức mua tương đương (lạm phát 3,5%/năm)</th></tr></thead>
+                <tbody>
+                    <tr><td>Hôm nay</td><td>100 triệu</td></tr>
+                    <tr><td>Sau 10 năm</td><td>~70,9 triệu</td></tr>
+                    <tr><td>Sau 20 năm</td><td><strong>~50,3 triệu — mất một nửa!</strong></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="callout callout-info">
+            <div class="callout-title">💡 Quy tắc 72 (Rule of 72)</div>
+            <p>Lấy <strong>72 chia cho tỷ lệ % mỗi năm</strong>, ra số năm để một thứ <strong>tăng gấp đôi</strong> (hoặc sức mua <strong>giảm một nửa</strong>). Lạm phát 3,5%/năm → 72 ÷ 3,5 ≈ <strong>20,6 năm</strong> để tiền mặt mất nửa sức mua. Đầu tư sinh lời 10%/năm → 72 ÷ 10 = <strong>7,2 năm</strong> để tiền nhân đôi.</p>
+        </div>
+
+        <p><strong>Kết luận:</strong> giữ toàn bộ tiền mặt = chắc chắn thua lạm phát. Gửi tiết kiệm bù được phần lớn lạm phát nhưng khó giàu lên thực chất. Muốn <strong>tăng trưởng thực</strong>, cần kênh có lợi suất kỳ vọng cao hơn — đó là lý do chứng khoán & quỹ đầu tư tồn tại.</p>
+
+        <h3 id="s1-2">1.2. Lãi kép — "kỳ quan thứ 8 của thế giới"</h3>
+        <p><strong>Lãi kép (compound interest)</strong> là khi tiền lãi kiếm được lại tiếp tục sinh lãi. Ví dụ đều đặn đầu tư <strong>5 triệu đồng/tháng (60 triệu/năm)</strong>:</p>
+
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Lợi suất bình quân</th><th>Sau 10 năm (vốn góp 600tr)</th><th>Sau 20 năm (vốn góp 1,2 tỷ)</th></tr></thead>
+                <tbody>
+                    <tr><td>5%/năm (cỡ tiết kiệm)</td><td>~755 triệu</td><td>~1,98 tỷ</td></tr>
+                    <tr><td>10%/năm (cỡ TB dài hạn của cổ phiếu)</td><td>~956 triệu</td><td><strong>~3,44 tỷ</strong></td></tr>
+                    <tr><td>12%/năm</td><td>~1,05 tỷ</td><td>~4,32 tỷ</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p>Hai bài học: <strong>(1)</strong> chênh lệch vài % lợi suất/năm → chênh lệch khổng lồ sau 20 năm (1,98 tỷ so với 3,44 tỷ). <strong>(2)</strong> Thời gian là nguyên liệu quan trọng nhất của lãi kép — bắt đầu sớm 5–10 năm giá trị hơn cả việc chọn được cổ phiếu "thần thánh".</p>
+
+        <h3 id="s1-3">1.3. Đừng đầu tư khi nền móng chưa vững</h3>
+        <p>Sai lầm số 1 của người mới: mang <strong>tiền cần dùng trong ngắn hạn</strong> đi đầu tư. Chứng khoán có thể giảm 30–50% trong một năm xấu. Sơ đồ dưới mô tả "trạm kiểm soát" cần đi qua <strong>trước khi</strong> đồng tiền đầu tiên chạm vào thị trường:</p>
+
+        <div class="decision-tree">
+            <div class="dt-node dt-node--start dt-reveal">🚀 Thu nhập hàng tháng → chi tiêu thiết yếu</div>
+            <div class="dt-connector"></div>
+            <div class="dt-node dt-node--question dt-reveal">❓ Đã có quỹ khẩn cấp = 3–6 tháng chi tiêu?</div>
+            <div class="dt-branches">
+                <div class="dt-branch">
+                    <span class="dt-branch-label dt-branch-label--no">Chưa</span>
+                    <div class="dt-node dt-node--warning dt-reveal">⚠️ Ưu tiên xây quỹ khẩn cấp trước (tiết kiệm linh hoạt, dễ rút)</div>
+                </div>
+                <div class="dt-branch">
+                    <span class="dt-branch-label dt-branch-label--yes">Rồi</span>
+                    <div class="dt-node dt-node--question dt-reveal">❓ Còn nợ lãi cao? (thẻ tín dụng, vay tiêu dùng)</div>
+                    <div class="dt-connector"></div>
+                    <div class="dt-branches">
+                        <div class="dt-branch">
+                            <span class="dt-branch-label dt-branch-label--no">Có</span>
+                            <div class="dt-node dt-node--danger dt-reveal">❌ Trả hết nợ lãi cao trước (lãi 20–40%/năm luôn cao hơn lợi nhuận đầu tư kỳ vọng)</div>
+                        </div>
+                        <div class="dt-branch">
+                            <span class="dt-branch-label dt-branch-label--yes">Không</span>
+                            <div class="dt-node dt-node--success dt-reveal">✅ Tiền nhàn rỗi DÀI HẠN (≥3–5 năm không cần đến) → sẵn sàng đầu tư</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="callout callout-warn">
+            <div class="callout-title">⚠️ Nguyên tắc vàng</div>
+            <p>Chỉ đầu tư bằng <strong>tiền nhàn rỗi dài hạn</strong> — số tiền mà nếu "kẹt" 3–5 năm, cuộc sống vẫn không bị ảnh hưởng. Tuyệt đối không vay tiền để đầu tư khi mới bắt đầu.</p>
+        </div>
+
+        <h3 id="s1-4">1.4. So sánh nhanh các kênh đầu tư phổ biến ở Việt Nam</h3>
+
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Kênh</th><th>Lợi suất kỳ vọng dài hạn*</th><th>Rủi ro</th><th>Thanh khoản</th><th>Vốn tối thiểu</th><th>Cần kiến thức?</th></tr></thead>
+                <tbody>
+                    <tr><td>Gửi tiết kiệm</td><td>~4–6%/năm</td><td>Rất thấp</td><td>Cao</td><td>Thấp</td><td>Không</td></tr>
+                    <tr><td>Trái phiếu chính phủ</td><td>~3–5%/năm</td><td>Rất thấp</td><td>Trung bình</td><td>Trung bình</td><td>Ít</td></tr>
+                    <tr><td>Trái phiếu doanh nghiệp</td><td>~7–11%/năm</td><td><strong>TB–cao</strong> (tùy DN)</td><td>Thấp–TB</td><td>Cao</td><td><strong>Nhiều</strong></td></tr>
+                    <tr><td>Vàng</td><td>Bám lạm phát + biến động mạnh</td><td>Trung bình</td><td>Cao</td><td>Thấp</td><td>Ít</td></tr>
+                    <tr><td>Cổ phiếu</td><td>VN-Index dài hạn ~10–11%/năm, <strong>rất</strong> trồi sụt</td><td>Cao</td><td>Cao (T+2)</td><td>Rất thấp</td><td><strong>Nhiều</strong></td></tr>
+                    <tr><td>Chứng chỉ quỹ (mở/ETF)</td><td>Bám lớp tài sản quỹ nắm</td><td>TB–cao</td><td>Cao</td><td>Rất thấp</td><td>Ít–TB</td></tr>
+                    <tr><td>Bất động sản</td><td>Tùy chu kỳ, khu vực</td><td>TB–cao</td><td><strong>Thấp</strong></td><td>Rất cao</td><td>Nhiều</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p style="font-size:0.8rem;color:var(--muted)">* Số liệu mang tính lịch sử/tham khảo, không phải cam kết cho tương lai. VN-Index từng tăng &gt;100% (2006), ~36% (2021), nhưng cũng từng giảm ~66% (2008) và ~33% (2022).</p>
+
+        <div class="callout callout-info">
+            <div class="callout-title">💡 Lợi suất thực</div>
+            <p>Lợi suất thực ≈ lợi suất danh nghĩa − lạm phát. Gửi tiết kiệm 5%/năm khi lạm phát 3,5% → chỉ giàu lên <strong>thực</strong> ~1,5%/năm; cổ phiếu 10% trừ lạm phát còn ~6,5%/năm <strong>thực</strong>. Luôn trừ lạm phát trước khi kết luận "hời hay không".</p>
+        </div>
+
+        <p><strong>Điểm khắc cốt ghi tâm:</strong> trong đầu tư hợp pháp, <strong>lợi nhuận kỳ vọng cao luôn đi kèm rủi ro cao</strong>. Ai hứa "lợi nhuận cao + không rủi ro + cam kết chắc chắn" → gần như chắc chắn là lừa đảo (chi tiết Phần 9).</p>
+
+        <hr>
+```
+
+Also append to `<!-- TOC_ANCHOR -->` in the sidebar:
+
+```html
+            <li><a href="#s1">1. Vì sao phải đầu tư?</a></li>
+            <li class="toc-h3"><a href="#s1-1">1.1 Lạm phát</a></li>
+            <li class="toc-h3"><a href="#s1-2">1.2 Lãi kép</a></li>
+            <li class="toc-h3"><a href="#s1-3">1.3 Nền móng trước khi đầu tư</a></li>
+            <li class="toc-h3"><a href="#s1-4">1.4 So sánh kênh đầu tư</a></li>
+```
+
+- [ ] **Step 2: Verify**
+
+Reload the page. Confirm: two tables render with borders/hover, the decision-tree shows a start pill → question pill → two branches (left "Chưa" danger-adjacent warning box, right "Rồi" leading to a *nested* second question with its own two branches). Confirm branches stack vertically on a narrow viewport (<600px).
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add blog/nhap-mon-chung-khoan/index.html
+git commit -m "feat(nhap-mon-chung-khoan): add section 1 — inflation & compound interest"
+```
+
+---
+
+## Task 4: Section 2 — Bức tranh lớn (market structure)
+
+**Files:**
+- Modify: `blog/nhap-mon-chung-khoan/index.html`
+
+**Interfaces:**
+- Consumes: `.org-map`/`.org-node`/`.org-arrow-down`/`.oversight-banner`, `.compare-grid` (from Task 2)
+- Produces: `<h2 id="s2">`, `<h3 id="s2-1">`..`<h3 id="s2-5">`
+
+- [ ] **Step 1: Insert Section 2 HTML** (right after Task 3's closing `<hr>`)
+
+```html
+        <h2 id="s2">2. Bức tranh lớn: Thị trường tài chính & chứng khoán Việt Nam</h2>
+
+        <h3 id="s2-1">2.1. Thị trường chứng khoán sinh ra để làm gì?</h3>
+        <blockquote>Chị Hoa mở quán cà phê đông khách, muốn mở thêm 10 chi nhánh nhưng thiếu 5 tỷ. Chị có 3 lựa chọn: vay ngân hàng; hoặc <strong>đi vay của nhiều người, hứa trả lãi</strong> — bản chất của <strong>trái phiếu</strong>; hoặc <strong>mời nhiều người góp vốn, chia quyền sở hữu và lợi nhuận</strong> — bản chất của <strong>cổ phiếu</strong>.</blockquote>
+        <p>Thị trường chứng khoán (TTCK) là <strong>cái chợ khổng lồ, có tổ chức và được giám sát</strong>: doanh nghiệp đến để <strong>huy động vốn</strong>, nhà đầu tư đến để cho tiền "đi làm" đổi lấy kỳ vọng lợi nhuận, Nhà nước giám sát để cuộc chơi minh bạch.</p>
+
+        <h3 id="s2-2">2.2. "Bộ máy" thị trường chứng khoán Việt Nam</h3>
+        <p>Hành trình của bạn (nhà đầu tư) kết nối vào thị trường qua những "mắt xích" nào, và ai giám sát toàn bộ cuộc chơi:</p>
+
+        <div class="org-map">
+            <div class="org-node org-node--accent"><span class="org-node-icon">👤</span><span>Nhà đầu tư (bạn)</span></div>
+            <div class="org-arrow-down">↓ mở tài khoản, đặt lệnh</div>
+            <div class="org-node"><span class="org-node-icon">🚪</span><span>Công ty chứng khoán (CTCK)<span class="org-node-sub">cửa ngõ vào thị trường — SSI, VPS, TCBS, VNDIRECT...</span></span></div>
+            <div class="org-arrow-down">↓ chuyển lệnh</div>
+            <div class="org-node"><span class="org-node-icon">⚙️</span><span>Sở Giao dịch — HOSE · HNX · UPCoM<span class="org-node-sub">bộ máy khớp lệnh mua–bán</span></span></div>
+            <div class="org-arrow-down">↓ đối chiếu, ghi nhận sở hữu</div>
+            <div class="org-node"><span class="org-node-icon">🗄️</span><span>VSDC — Lưu ký & Bù trừ CK<span class="org-node-sub">"cất giữ" chứng khoán, thanh toán tiền–hàng · phối hợp với Ngân hàng thanh toán</span></span></div>
+            <div class="oversight-banner">🛡️ <strong>UBCKNN</strong> (Ủy ban Chứng khoán Nhà nước, thuộc Bộ Tài chính) cấp phép &amp; giám sát <strong>cả ba</strong> mắt xích trên</div>
+        </div>
+
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Thành phần</th><th>Vai trò</th><th>Hình dung đời thường</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>CTCK</strong></td><td>Mở tài khoản, nhận lệnh, cho vay ký quỹ, tư vấn</td><td>"Quầy giao dịch" — không tự chạy vào chợ được, phải qua quầy</td></tr>
+                    <tr><td><strong>Sở Giao dịch</strong></td><td>Niêm yết, khớp lệnh, công bố thông tin</td><td>Ban quản lý chợ + hệ thống loa ghép người mua với người bán</td></tr>
+                    <tr><td><strong>VSDC</strong></td><td>Ghi sổ ai đang sở hữu gì; đảm bảo "tiền trao – cháo múc"</td><td>Kho gửi đồ + trọng tài thanh toán — cổ phiếu ngày nay là bút toán điện tử</td></tr>
+                    <tr><td><strong>UBCKNN</strong></td><td>Cấp phép, thanh tra, xử phạt thao túng/gian lận</td><td>Cảnh sát + tòa án của cái chợ</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="callout callout-info">
+            <div class="callout-title">💡 Vì sao quan trọng với bạn?</div>
+            <p>Tiền và chứng khoán của bạn được <strong>tách bạch và ghi nhận tại VSDC dưới tên bạn</strong> — nếu CTCK phá sản, chứng khoán vẫn là <em>của bạn</em>. Khác biệt sống còn so với đưa tiền cho một "app đầu tư" trôi nổi không phép (Phần 9).</p>
+        </div>
+
+        <h3 id="s2-3">2.3. Thị trường sơ cấp vs thứ cấp — tiền chảy đi đâu?</h3>
+
+        <div class="compare-grid">
+            <div class="compare-col compare-col--a">
+                <div class="compare-col-title">1️⃣ Thị trường SƠ CẤP</div>
+                <p>Doanh nghiệp bán chứng khoán <strong>lần đầu</strong> để lấy vốn — ví dụ qua <strong>IPO</strong> (Initial Public Offering). Tiền của bạn chảy <strong>vào túi doanh nghiệp</strong>.</p>
+            </div>
+            <div class="compare-col compare-col--b">
+                <div class="compare-col-title">2️⃣ Thị trường THỨ CẤP</div>
+                <p>Nơi bạn giao dịch hằng ngày trên app — nhà đầu tư mua bán <strong>với nhau</strong>. Tiền chảy vào túi một nhà đầu tư khác đang bán ra; doanh nghiệp không nhận thêm đồng nào. Vai trò: tạo <strong>thanh khoản (liquidity)</strong>.</p>
+            </div>
+        </div>
+
+        <h3 id="s2-4">2.4. Ba sàn giao dịch & các chỉ số cần biết</h3>
+
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Sàn</th><th>Đặc điểm</th><th>Chỉ số đại diện</th><th>Biên độ dao động/ngày</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>HOSE</strong> (TP.HCM)</td><td>Doanh nghiệp lớn nhất, chuẩn niêm yết cao nhất</td><td>VN-Index, VN30</td><td><strong>±7%</strong></td></tr>
+                    <tr><td><strong>HNX</strong> (Hà Nội)</td><td>Doanh nghiệp vừa; trái phiếu, phái sinh</td><td>HNX-Index, HNX30</td><td><strong>±10%</strong></td></tr>
+                    <tr><td><strong>UPCoM</strong></td><td>"Sân tập" — chuẩn công bố lỏng hơn, rủi ro cao hơn</td><td>UPCoM-Index</td><td><strong>±15%</strong></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p><strong>VN-Index</strong> — "nhiệt kế" nổi tiếng nhất của TTCK Việt Nam: bình quân <strong>gia quyền theo vốn hóa</strong> của toàn bộ cổ phiếu niêm yết trên HOSE, gốc <strong>100 điểm vào tháng 7/2000</strong>. <strong>VN30</strong> gồm 30 cổ phiếu vốn hóa và thanh khoản hàng đầu — nhiều ETF mô phỏng theo nó. <strong>Vốn hóa</strong> = giá cổ phiếu × tổng số cổ phiếu lưu hành.</p>
+
+        <h3 id="s2-5">2.5. Bối cảnh 2025–2026: khúc quanh lịch sử</h3>
+        <ul>
+            <li><strong>Quy mô:</strong> vượt mốc <strong>10 triệu tài khoản chứng khoán</strong> cuối 2025.</li>
+            <li><strong>Hạ tầng:</strong> hệ thống giao dịch mới <strong>KRX</strong> vận hành từ tháng 5/2025.</li>
+            <li><strong>Nâng hạng:</strong> FTSE Russell nâng hạng TTCK Việt Nam từ <strong>Thị trường Cận biên</strong> lên <strong>Thị trường Mới nổi Thứ cấp</strong>, hiệu lực <strong>21/09/2026</strong> — dòng vốn ngoại dự báo lên tới hàng tỷ USD.</li>
+        </ul>
+        <div class="callout callout-warn">
+            <div class="callout-title">💡 Đừng FOMO</div>
+            <p>Nâng hạng là câu chuyện <strong>dài hạn về chất</strong>, không phải "kèo x2 tài khoản trong 3 tháng". Giá cổ phiếu thường đã phản ánh trước một phần kỳ vọng. Người mới cứ học bài bản — cơ hội dài hạn không biến mất chỉ sau một sự kiện.</p>
+        </div>
+
+        <hr>
+```
+
+Append to `.toc-list`:
+
+```html
+            <li><a href="#s2">2. Bức tranh lớn thị trường</a></li>
+            <li class="toc-h3"><a href="#s2-2">2.2 Bộ máy TTCK VN</a></li>
+            <li class="toc-h3"><a href="#s2-3">2.3 Sơ cấp vs thứ cấp</a></li>
+            <li class="toc-h3"><a href="#s2-4">2.4 Ba sàn & chỉ số</a></li>
+```
+
+- [ ] **Step 2: Verify**
+
+Reload the page. Confirm the `.org-map` renders as a centered vertical chain of 4 boxes with down-arrows between them and a dashed amber "oversight" banner at the bottom; confirm the primary/secondary `.compare-grid` shows two side-by-side cards (stacking under 700px).
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add blog/nhap-mon-chung-khoan/index.html
+git commit -m "feat(nhap-mon-chung-khoan): add section 2 — market structure"
+```
+
+---
+
+## Task 5: Section 3 — Chứng khoán là gì? Phân loại 4 nhóm
+
+**Files:**
+- Modify: `blog/nhap-mon-chung-khoan/index.html`
+
+**Interfaces:**
+- Consumes: `.compare-grid`/`.compare-col` (from Task 2, reused with 4 children — wraps to a 2×2 grid automatically since `.compare-grid` is `repeat(2, 1fr)`)
+- Produces: `<h2 id="s3">`
+
+- [ ] **Step 1: Insert Section 3 HTML**
+
+```html
+        <h2 id="s3">3. Chứng khoán là gì? Phân loại 4 nhóm</h2>
+
+        <p><strong>Chứng khoán (securities)</strong> là các loại "giấy tờ có giá" (ngày nay là bút toán điện tử) xác nhận <strong>quyền và lợi ích hợp pháp</strong> của người sở hữu đối với tài sản hoặc phần vốn của tổ chức phát hành. Nói dân dã: bằng chứng rằng bạn <strong>sở hữu một phần công ty</strong>, hoặc <strong>đang cho ai đó vay tiền</strong>, hoặc <strong>góp vốn vào một quỹ</strong>. Bốn nhóm chính:</p>
+
+        <div class="compare-grid">
+            <div class="compare-col compare-col--a">
+                <div class="compare-col-title">📈 Cổ phiếu (stock)</div>
+                <p>Quyền <strong>SỞ HỮU</strong> một phần công ty. Kiếm tiền từ: cổ tức + chênh lệch giá. Rủi ro: <strong>CAO</strong> — lời ăn lỗ chịu cùng công ty.</p>
+            </div>
+            <div class="compare-col compare-col--b">
+                <div class="compare-col-title">🧾 Trái phiếu (bond)</div>
+                <p>Quyền <strong>CHỦ NỢ</strong> — bạn cho vay. Kiếm tiền từ: lãi coupon định kỳ + hoàn gốc. Rủi ro: THẤP → CAO tùy người phát hành.</p>
+            </div>
+            <div class="compare-col compare-col--a">
+                <div class="compare-col-title">🧺 Chứng chỉ quỹ (fund certificate)</div>
+                <p>Góp vốn vào quỹ đầu tư. Kiếm tiền từ: tăng trưởng giá trị quỹ (NAV). Rủi ro: tùy quỹ nắm cổ phiếu hay trái phiếu.</p>
+            </div>
+            <div class="compare-col compare-col--warn">
+                <div class="compare-col-title">⚡ Chứng khoán phái sinh (derivatives)</div>
+                <p>Hợp đồng "đặt cược" dựa trên tài sản khác. Đòn bẩy rất cao, có thể mất sạch nhanh. ⚠️ <strong>KHÔNG dành cho người mới</strong>.</p>
+            </div>
+        </div>
+
+        <p>Cách nhớ nhanh bằng câu chuyện quán cà phê chị Hoa ở Phần 2:</p>
+
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Bạn cầm...</th><th>Nghĩa là...</th><th>Nếu quán lãi to</th><th>Nếu quán phá sản</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Cổ phiếu</strong></td><td>Bạn là đồng sở hữu quán</td><td>Được chia lợi nhuận + vốn góp tăng giá trị</td><td>Có thể mất trắng phần vốn góp (chỉ mất tối đa số đã góp — trách nhiệm hữu hạn)</td></tr>
+                    <tr><td><strong>Trái phiếu</strong></td><td>Bạn là chủ nợ của quán</td><td>Chỉ nhận đúng lãi đã cam kết, không hơn</td><td>Được ưu tiên trả nợ <strong>trước</strong> cổ đông</td></tr>
+                    <tr><td><strong>Chứng chỉ quỹ</strong></td><td>Góp tiền vào "hội đầu tư" thuê chuyên gia mua nhiều quán khác</td><td>Hưởng theo kết quả cả rổ</td><td>Rủi ro được phân tán ra nhiều quán</td></tr>
+                    <tr><td><strong>Phái sinh</strong></td><td>Bạn <em>cược</em> về giá tương lai của quán</td><td>Thắng đậm nhờ đòn bẩy</td><td>Thua đậm cũng nhờ... đòn bẩy ⚠️</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="callout callout-warn">
+            <div class="callout-title">⚠️ Về phái sinh</div>
+            <p>Tại VN chủ yếu là Hợp đồng tương lai chỉ số VN30: chỉ cần ký quỹ một phần nhỏ giá trị hợp đồng nên đòn bẩy hiệu dụng rất cao — chỉ số biến động vài % là tài khoản có thể biến động vài chục %. <strong>Tài liệu này khuyến nghị người mới tránh xa phái sinh ít nhất 1–2 năm đầu</strong> — phần còn lại tập trung vào cổ phiếu, trái phiếu và quỹ.</p>
+        </div>
+
+        <hr>
+```
+
+Append to `.toc-list`:
+
+```html
+            <li><a href="#s3">3. Phân loại chứng khoán</a></li>
+```
+
+- [ ] **Step 2: Verify**
+
+Reload the page. Confirm the 4 classification cards render as a 2×2 grid (desktop) collapsing to 1 column under 700px, and the coffee-shop table renders correctly.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add blog/nhap-mon-chung-khoan/index.html
+git commit -m "feat(nhap-mon-chung-khoan): add section 3 — securities classification"
+```
+
+---
+
+## Task 6: Section 4 — Cổ phiếu từ A → Z
+
+**Files:**
+- Modify: `blog/nhap-mon-chung-khoan/index.html`
+
+**Interfaces:**
+- Consumes: `.diagram-box` + `<pre>` (Task 2 reset), `.spring-phases`/`.spring-phase*` (existing), `.deep-dive`, `.callout`, `.blog-table`
+- Produces: `<h2 id="s4">`, `<h3 id="s4-1">`..`<h3 id="s4-8">`, `<h3 id="dd-orderbook">`, `<h3 id="dd-exdiv">` (Deep Dives use h3+deep-dive box, not separate TOC entries except the two flagged ones, matching the loose-coupling precedent of giving Deep Dives their own TOC row prefixed `↳`)
+
+- [ ] **Step 1: Insert Section 4 HTML**
+
+```html
+        <h2 id="s4">4. Cổ phiếu từ A → Z: bảng giá, lệnh, T+2</h2>
+
+        <h3 id="s4-1">4.1. Sở hữu cổ phiếu, bạn có quyền gì?</h3>
+        <p>Khi mua dù chỉ 100 cổ phiếu, bạn chính thức là <strong>cổ đông (shareholder)</strong> với các quyền: nhận <strong>cổ tức (dividend)</strong>; <strong>biểu quyết</strong> tại Đại hội đồng cổ đông; <strong>mua ưu tiên</strong> khi phát hành thêm; và <strong>nhận phần tài sản còn lại</strong> nếu công ty giải thể (sau khi trả hết chủ nợ). Điểm cực kỳ quan trọng: <strong>trách nhiệm hữu hạn (limited liability)</strong> — tệ nhất bạn mất số tiền đã bỏ ra mua, không ai siết nhà bạn (trừ khi vay ký quỹ — mục 4.8).</p>
+
+        <h3 id="s4-2">4.2. Hai cách kiếm tiền từ cổ phiếu</h3>
+        <p><strong>1. Lãi vốn (capital gain):</strong> mua giá thấp bán giá cao — mua 1.000 CP giá 50.000đ (vốn 50tr), sau 2 năm giá 70.000đ → bán thu 70tr, lãi 20tr (chưa trừ thuế phí — Phần 10). <strong>2. Cổ tức (dividend):</strong> dòng tiền đều đặn, không cần bán. Câu nói kinh điển của Benjamin Graham: <em>ngắn hạn thị trường là cỗ máy bỏ phiếu (cảm tính), dài hạn nó là cái cân (đo giá trị thật)</em>.</p>
+
+        <h3 id="s4-3">4.3. Mệnh giá vs thị giá — đừng nhầm!</h3>
+        <p><strong>Mệnh giá (par value):</strong> tại VN thống nhất <strong>10.000đ</strong> — chỉ là con số danh nghĩa (tính vốn điều lệ, cổ tức "tỷ lệ %"). <strong>Thị giá (market price):</strong> giá giao dịch thực trên sàn, do cung–cầu quyết định.</p>
+        <div class="callout callout-info">
+            <div class="callout-title">💡 Bẫy hiểu nhầm phổ biến</div>
+            <p>Công ty công bố "trả cổ tức 15% bằng tiền" — 15% đó tính trên <strong>mệnh giá</strong> → tức 1.500đ/CP, <strong>không phải</strong> 15% thị giá.</p>
+        </div>
+
+        <h3 id="s4-4">4.4. Đọc bảng giá: tham chiếu – trần – sàn</h3>
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Khái niệm</th><th>Ý nghĩa</th><th>Màu quy ước</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Giá tham chiếu</strong></td><td>Giá đóng cửa phiên trước — mốc so sánh hôm nay</td><td>Vàng</td></tr>
+                    <tr><td><strong>Giá trần (ceiling)</strong></td><td>Cao nhất = tham chiếu × (1 + biên độ)</td><td>Tím</td></tr>
+                    <tr><td><strong>Giá sàn (floor)</strong></td><td>Thấp nhất = tham chiếu × (1 − biên độ)</td><td>Xanh lam nhạt</td></tr>
+                    <tr><td>Giá tăng so với tham chiếu</td><td>—</td><td>Xanh lá</td></tr>
+                    <tr><td>Giá giảm so với tham chiếu</td><td>—</td><td>Đỏ</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p><strong>Ví dụ tính</strong> — cổ phiếu ABC trên HOSE (biên độ ±7%), giá tham chiếu 50.000đ: giá trần = 50.000 × 1,07 = <strong>53.500đ</strong>; giá sàn = 50.000 × 0,93 = <strong>46.500đ</strong>. Biên độ: HOSE ±7%, HNX ±10%, UPCoM ±15% (ngày niêm yết đầu tiên nới rộng: ±20/±30/±40%). <strong>Khối lượng (volume)</strong> là "chữ ký" của dòng tiền — giá tăng kèm volume lớn đáng tin hơn giá tăng trong im lặng.</p>
+
+        <h3 id="s4-5">4.5. Đơn vị giao dịch, bước giá, giờ giao dịch</h3>
+        <p><strong>Lô chẵn = 100 cổ phiếu</strong> (bội số bắt buộc); <strong>lô lẻ</strong> (1–99 CP) thanh khoản kém hơn. <strong>Bước giá HOSE:</strong> &lt;10.000đ → bước 10đ; 10.000–&lt;50.000đ → bước 50đ; ≥50.000đ → bước 100đ (HNX/UPCoM: 100đ mọi mức).</p>
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Khung giờ</th><th>Phiên</th><th>Diễn ra điều gì</th></tr></thead>
+                <tbody>
+                    <tr><td>9h00–9h15</td><td><strong>ATO</strong></td><td>Gom lệnh, khớp 1 lần → xác định <strong>giá mở cửa</strong></td></tr>
+                    <tr><td>9h15–11h30</td><td>Liên tục sáng</td><td>Lệnh khớp ngay khi có đối ứng</td></tr>
+                    <tr><td>11h30–13h00</td><td>Nghỉ trưa</td><td>—</td></tr>
+                    <tr><td>13h00–14h30</td><td>Liên tục chiều</td><td>—</td></tr>
+                    <tr><td>14h30–14h45</td><td><strong>ATC</strong></td><td>Khớp 1 lần → <strong>giá đóng cửa</strong> = giá tham chiếu ngày mai</td></tr>
+                    <tr><td>14h45–15h00</td><td>Thỏa thuận</td><td>Lô lớn mua bán trực tiếp qua sàn</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3 id="s4-6">4.6. Các loại lệnh — người mới chỉ cần nhớ LO</h3>
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Lệnh</th><th>Cách hoạt động</th><th>Khi nào dùng</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>LO</strong> (Limit Order)</td><td>"Mua tối đa giá X / bán tối thiểu giá X" — chỉ khớp ở mức bằng hoặc tốt hơn</td><td>✅ Mặc định cho người mới</td></tr>
+                    <tr><td><strong>MP</strong> (Market Order)</td><td>Khớp ngay bằng mọi giá tốt nhất đang có</td><td>Cần khớp gấp — rủi ro trượt giá</td></tr>
+                    <tr><td><strong>ATO / ATC</strong></td><td>Tham gia phiên khớp định kỳ, chấp nhận giá khớp chung</td><td>Muốn mua đúng giá đóng cửa</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="callout callout-warn">
+            <div class="callout-title">⚠️ Lưu ý hay gây "học phí"</div>
+            <p>Đặt lệnh MP với cổ phiếu vắng người bán có thể khiến bạn mua giá cao hơn hẳn dự tính, vì lệnh "quét" dần lên các mức chào bán cao hơn. Người mới: cứ <strong>LO</strong> mà dùng.</p>
+        </div>
+
+        <div class="deep-dive">
+            <div class="deep-dive-label">🔬 Deep Dive</div>
+            <div class="deep-dive-title">Sổ lệnh & nguyên tắc khớp — vì sao lệnh của tôi mãi chưa khớp?</div>
+            <div class="deep-dive-audience">Dành cho: người muốn hiểu cơ chế khớp lệnh liên tục</div>
+            <p>Mọi lệnh LO chưa khớp xếp hàng trong <strong>sổ lệnh (order book)</strong>. Đây là sổ lệnh thu nhỏ của cổ phiếu ABC tại một khoảnh khắc:</p>
+            <div class="diagram-box"><pre>              SỔ LỆNH CỔ PHIẾU ABC (khớp lệnh liên tục)
+   ┌────────── BÊN MUA ──────────┐   ┌────────── BÊN BÁN ──────────┐
+   │  KL chờ mua  │   Giá đặt    │   │   Giá đặt    │  KL chờ bán  │
+   ├──────────────┼──────────────┤   ├──────────────┼──────────────┤
+   │    5.000     │   49.900  ◄──┼───┼──►  50.000   │    2.000     │
+   │    3.000     │   49.850     │   │     50.100   │    4.000     │
+   │    8.000     │   49.800     │   │     50.200   │    6.000     │
+   └──────────────┴──────────────┘   └──────────────┴──────────────┘
+        ▲ giá MUA tốt nhất: 49.900      ▲ giá BÁN tốt nhất: 50.000
+          (chưa ai chịu nhường → chưa khớp, chênh lệch 100đ)</pre></div>
+            <p>Khớp theo hai nguyên tắc, đúng thứ tự: <strong>(1) ưu tiên giá</strong> — mua giá cao hơn / bán giá thấp hơn xếp trước; <strong>(2) ưu tiên thời gian</strong> — cùng giá, ai đặt trước khớp trước.</p>
+            <hr>
+            <p>Ba tình huống kinh điển từ sổ lệnh trên: đặt <strong>LO mua 100 CP giá 50.000</strong> → khớp ngay với 2.000 CP đang chờ bán đúng giá đó. Đặt <strong>LO mua giá 49.900</strong> → xếp sau 5.000 CP đã chờ sẵn — "đặt mãi không khớp" không phải lỗi app, mà bạn đứng cuối hàng ở mức giá thị trường chưa chạm tới. Đặt <strong>MP mua 10.000 CP</strong> → lệnh quét 2.000@50.000 → 4.000@50.100 → 4.000@50.200, giá bình quân ~50.120đ — đó là <strong>trượt giá (slippage)</strong> bằng số cụ thể.</p>
+        </div>
+
+        <h3 id="s4-7">4.7. Chu kỳ thanh toán T+2</h3>
+        <p><strong>Giao dịch khớp hôm nay nhưng "tiền trao – cháo múc" hoàn tất sau 2 ngày làm việc (T+2)</strong>. Vòng đời một lệnh mua:</p>
+
+        <div class="spring-phases">
+            <div class="spring-phase">
+                <div class="spring-phase-left"><div class="spring-phase-num">T</div><div class="spring-phase-line"></div></div>
+                <div class="spring-phase-body">
+                    <div class="spring-phase-title">📅 Ngày T — ngày giao dịch</div>
+                    <ul class="spring-phase-items">
+                        <li>Đặt lệnh <code>LO: MUA 100 ABC @ 50.000</code></li>
+                        <li>App CTCK chuyển lệnh vào hệ thống khớp lệnh Sàn HOSE</li>
+                        <li>✅ Khớp lệnh — App báo khớp, tạm khóa tiền + phí</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="spring-phase">
+                <div class="spring-phase-left"><div class="spring-phase-num">T+1</div><div class="spring-phase-line"></div></div>
+                <div class="spring-phase-body">
+                    <div class="spring-phase-title">📅 Ngày T+1 — bù trừ</div>
+                    <ul class="spring-phase-items">
+                        <li>Sàn ↔ VSDC đối chiếu, bù trừ nghĩa vụ tiền ↔ chứng khoán</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="spring-phase">
+                <div class="spring-phase-left"><div class="spring-phase-num">T+2</div></div>
+                <div class="spring-phase-body">
+                    <div class="spring-phase-title">📅 Ngày T+2 — thanh toán</div>
+                    <ul class="spring-phase-items">
+                        <li>VSDC chuyển 100 ABC về tài khoản (buổi chiều)</li>
+                        <li>✅ Từ <strong>PHIÊN CHIỀU ngày T+2</strong> mới có thể bán số cổ phiếu này</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <p>Ví dụ: <strong>mua thứ Hai</strong> → cổ phiếu về chiều thứ Tư, bán được từ phiên chiều thứ Tư. <strong>Bán thứ Năm</strong> → tiền về chiều thứ Hai tuần sau. <strong>Hệ quả:</strong> bạn <em>không thể</em> mua sáng bán chiều cùng lô vừa mua — cấu trúc T+2 của TTCK Việt Nam về bản chất không khuyến khích "lướt trong ngày".</p>
+
+        <div class="deep-dive">
+            <div class="deep-dive-label">🔬 Deep Dive</div>
+            <div class="deep-dive-title">Ngày giao dịch không hưởng quyền — vì sao nhận cổ tức xong giá lại giảm?</div>
+            <div class="deep-dive-audience">Dành cho: người sắp nhận cổ tức lần đầu</div>
+            <p>Khi công ty chia cổ tức, có một <strong>ngày giao dịch không hưởng quyền (ex-dividend date)</strong>: mua từ ngày này trở đi thì <strong>KHÔNG</strong> được nhận đợt cổ tức đó, và giá tham chiếu bị <strong>điều chỉnh giảm tương ứng</strong>.</p>
+            <p>Ví dụ: ABC giá 50.000đ, trả cổ tức tiền mặt 2.000đ/CP → ngày không hưởng quyền, giá tham chiếu còn 48.000đ. Bạn nhận 2.000đ (còn ~1.900đ sau thuế 5%) nhưng giá vốn thị trường cũng giảm 2.000đ — <strong>tổng tài sản không tự nhiên tăng lên</strong>. Tương tự, cổ tức <strong>bằng cổ phiếu</strong> làm số CP tăng nhưng giá điều chỉnh giảm tương ứng — như cắt pizza thành nhiều miếng nhỏ hơn, tổng bánh không đổi.</p>
+        </div>
+
+        <h3 id="s4-8">4.8. Margin (vay ký quỹ) — con dao hai lưỡi</h3>
+        <p><strong>Giao dịch ký quỹ (margin trading)</strong>: CTCK cho vay thêm tiền để mua cổ phiếu, dùng chính cổ phiếu làm tài sản đảm bảo. Có 100tr, vay thêm 100tr → mua 200tr cổ phiếu: giá tăng 10% → lãi 20tr trên vốn 100tr = <strong>+20%</strong>. Giá <strong>giảm</strong> 10% → lỗ 20tr = <strong>−20%</strong> vốn; giảm sâu hơn, CTCK <strong>call margin</strong>, không nộp kịp thì <strong>bán giải chấp (force sell)</strong> đúng lúc giá thấp nhất.</p>
+        <div class="callout callout-warn">
+            <div class="callout-title">❌ Quy tắc cứng cho người mới</div>
+            <p><strong>KHÔNG dùng margin trong ít nhất năm đầu tiên.</strong> Phần lớn các vụ "cháy tài khoản" trên thị trường đều có bàn tay của đòn bẩy.</p>
+        </div>
+
+        <hr>
+```
+
+Append to `.toc-list`:
+
+```html
+            <li><a href="#s4">4. Cổ phiếu A→Z</a></li>
+            <li class="toc-h3"><a href="#s4-4">4.4 Đọc bảng giá</a></li>
+            <li class="toc-h3"><a href="#s4-6">4.6 Các loại lệnh</a></li>
+            <li class="toc-h3"><a href="#s4-7">4.7 T+2</a></li>
+            <li class="toc-h3"><a href="#s4-8">4.8 Margin</a></li>
+```
+
+- [ ] **Step 2: Verify**
+
+Reload. Confirm the order-book ASCII art renders with preserved box-drawing alignment (monospace, no wrapping) inside the deep-dive box, and the T+2 `.spring-phases` renders as 3 numbered circles (T / T+1 / T+2) connected by a vertical line with the last one having no trailing line.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add blog/nhap-mon-chung-khoan/index.html
+git commit -m "feat(nhap-mon-chung-khoan): add section 4 — stocks A-Z"
+```
+
+---
+
+## Task 7: Section 5 — Trái phiếu
+
+**Files:**
+- Modify: `blog/nhap-mon-chung-khoan/index.html`
+
+**Interfaces:**
+- Consumes: `.cashflow-timeline`/`.cf-*` (from Task 2), `.compare-grid`, `.deep-dive`
+- Produces: `<h2 id="s5">`, `<h3 id="s5-1">`..`<h3 id="s5-3">`
+
+- [ ] **Step 1: Insert Section 5 HTML**
+
+```html
+        <h2 id="s5">5. Trái phiếu: cho vay lấy lãi — nhưng không phải không có rủi ro</h2>
+
+        <h3 id="s5-1">5.1. Giải phẫu một trái phiếu</h3>
+        <p><strong>Trái phiếu (bond)</strong> = giấy nhận nợ có kỳ hạn. Người phát hành cam kết trả <strong>lãi định kỳ</strong> và <strong>hoàn vốn gốc</strong> khi đáo hạn.</p>
+
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Thuật ngữ</th><th>Ý nghĩa</th><th>Ví dụ</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Mệnh giá (face value)</strong></td><td>Số gốc hoàn trả khi đáo hạn</td><td>100 triệu đ</td></tr>
+                    <tr><td><strong>Lãi suất coupon</strong></td><td>% lãi trả định kỳ tính trên mệnh giá</td><td>9%/năm → 9tr/năm</td></tr>
+                    <tr><td><strong>Kỳ hạn (maturity)</strong></td><td>Thời điểm hoàn gốc</td><td>3 năm</td></tr>
+                    <tr><td><strong>Tổ chức phát hành</strong></td><td>Con nợ của bạn</td><td>Chính phủ / Doanh nghiệp X</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p>Ví dụ trọn gói: mua trái phiếu mệnh giá 100 triệu, coupon 9%/năm, kỳ hạn 3 năm → mỗi năm nhận 9 triệu lãi, cuối năm 3 nhận lại 100 triệu gốc (tổng dòng tiền 127 triệu):</p>
+
+        <div class="cashflow-timeline">
+            <div class="cf-track"></div>
+            <div class="cf-points">
+                <div class="cf-point"><div class="cf-point-dot"></div><span class="cf-point-year">Năm 0</span><span class="cf-point-amt cf-point-amt--out">−100tr<br><small style="font-weight:500">(bỏ vốn mua)</small></span></div>
+                <div class="cf-point"><div class="cf-point-dot"></div><span class="cf-point-year">Năm 1</span><span class="cf-point-amt cf-point-amt--in">+9tr<br><small style="font-weight:500">(coupon)</small></span></div>
+                <div class="cf-point"><div class="cf-point-dot"></div><span class="cf-point-year">Năm 2</span><span class="cf-point-amt cf-point-amt--in">+9tr<br><small style="font-weight:500">(coupon)</small></span></div>
+                <div class="cf-point"><div class="cf-point-dot"></div><span class="cf-point-year">Năm 3 (đáo hạn)</span><span class="cf-point-amt cf-point-amt--in">+9tr lãi<br>+100tr gốc</span></div>
+            </div>
+        </div>
+        <p>Đơn giản, dễ dự đoán — <strong>nếu</strong> con nợ trả đúng hẹn.</p>
+
+        <h3 id="s5-2">5.2. Hai rủi ro chính của trái phiếu</h3>
+        <p><strong>① Rủi ro tín dụng (credit risk)</strong> — trái phiếu chỉ chắc chắn ngang mức độ đáng tin của người phát hành. <strong>Trái phiếu Chính phủ:</strong> an toàn gần tuyệt đối → lãi suất thấp nhất, "lãi suất phi rủi ro" chuẩn để so sánh. <strong>Trái phiếu doanh nghiệp:</strong> lãi cao hơn hẳn (7–11%/năm+) = <strong>phần bù rủi ro</strong>. Lãi càng cao hơn mặt bằng, thị trường càng "định giá" khả năng vỡ nợ càng lớn — <strong>không có bữa trưa miễn phí</strong>.</p>
+
+        <p><strong>② Rủi ro lãi suất (interest rate risk)</strong> — giá trái phiếu chạy <em>ngược chiều</em> lãi suất thị trường:</p>
+
+        <div class="compare-grid">
+            <div class="compare-col compare-col--warn">
+                <div class="compare-col-title">📈 Lãi suất thị trường TĂNG</div>
+                <p>Trái phiếu mới trả lãi cao hơn → <strong>giá trái phiếu CŨ GIẢM</strong> (coupon cũ kém hấp dẫn, muốn bán phải hạ giá).</p>
+            </div>
+            <div class="compare-col compare-col--b">
+                <div class="compare-col-title">📉 Lãi suất thị trường GIẢM</div>
+                <p>Trái phiếu mới trả lãi thấp hơn → <strong>giá trái phiếu CŨ TĂNG</strong> (coupon cũ thành "hàng hiếm").</p>
+            </div>
+        </div>
+
+        <p>Ví dụ: giữ trái phiếu coupon 8%/năm; nếu lãi suất thị trường tăng lên 10%, ai còn muốn mua lại trái phiếu 8% <em>nguyên giá</em>? Phải bán <strong>dưới mệnh giá</strong>. (Nếu giữ đến đáo hạn và con nợ trả đủ, bạn vẫn nhận đúng dòng tiền cam kết — rủi ro lãi suất chủ yếu "cắn" khi cần <strong>bán giữa chừng</strong>.)</p>
+
+        <h3 id="s5-3">5.3. Người mới nên tiếp cận trái phiếu như thế nào?</h3>
+        <p>Trái phiếu doanh nghiệp riêng lẻ đòi hỏi kỹ năng thẩm định vượt tầm người mới. Lộ trình hợp lý: <strong>(1)</strong> coi gửi tiết kiệm + trái phiếu Chính phủ là "phần nền an toàn"; <strong>(2)</strong> muốn lợi suất nhỉnh hơn → đi qua <strong>quỹ trái phiếu</strong> (Phần 6); <strong>(3)</strong> trái phiếu doanh nghiệp phát hành riêng lẻ theo quy định hiện hành chỉ dành cho <strong>nhà đầu tư chứng khoán chuyên nghiệp</strong>.</p>
+
+        <div class="deep-dive">
+            <div class="deep-dive-label">🔬 Deep Dive</div>
+            <div class="deep-dive-title">Bài học đắt giá 2022 — khi "lãi suất cao gấp đôi ngân hàng" sập bẫy</div>
+            <div class="deep-dive-audience">Dành cho: ai từng nghe chào mời trái phiếu lãi cao</div>
+            <p>2020–2022, nhiều nhà đầu tư mua trái phiếu doanh nghiệp (đặc biệt nhóm bất động sản) qua lời chào "lãi 10–13%/năm, an toàn như gửi tiết kiệm". Năm 2022, các vụ án lớn (Tân Hoàng Minh, Vạn Thịnh Phát...) vỡ ra: hàng chục nghìn trái chủ bị chôn vốn, thị trường đóng băng, quy định phải siết lại.</p>
+            <p>Bốn bài học: <strong>(1)</strong> lãi suất cao hơn hẳn mặt bằng = cảnh báo rủi ro, không phải quà tặng; <strong>(2)</strong> "ngân hàng giới thiệu" ≠ "ngân hàng bảo lãnh thanh toán" — phân biệt <em>bảo lãnh phát hành</em> (chỉ giúp bán) với <em>bảo lãnh thanh toán</em> (cam kết trả nợ thay); <strong>(3)</strong> luôn hỏi tiền huy động dùng làm gì, trả nợ bằng nguồn nào, tài sản đảm bảo là gì; <strong>(4)</strong> đừng dồn tiền vào một tổ chức phát hành.</p>
+        </div>
+
+        <div class="deep-dive">
+            <div class="deep-dive-label">🔬 Deep Dive</div>
+            <div class="deep-dive-title">Lợi suất đáo hạn (YTM) — con số "thật" hơn coupon</div>
+            <div class="deep-dive-audience">Dành cho: người so sánh nhiều trái phiếu với nhau</div>
+            <p><strong>YTM (Yield to Maturity)</strong> trả lời: "nếu mua ở giá thị trường hôm nay và giữ đến đáo hạn, mỗi năm tôi thực lời bao nhiêu %?" — gộp cả coupon lẫn chênh lệch giá mua/mệnh giá. Ví dụ: trái phiếu mệnh giá 100tr, coupon 8%, còn 1 năm đáo hạn, đang bán 98tr → sau 1 năm nhận 108tr trên vốn 98tr → YTM ≈ (108−98)/98 ≈ <strong>10,2%</strong>, cao hơn hẳn coupon 8%. Khi so sánh trái phiếu, luôn so <strong>YTM</strong>, đừng so coupon.</p>
+        </div>
+
+        <hr>
+```
+
+Append to `.toc-list`:
+
+```html
+            <li><a href="#s5">5. Trái phiếu</a></li>
+            <li class="toc-h3"><a href="#s5-2">5.2 Hai rủi ro chính</a></li>
+```
+
+- [ ] **Step 2: Verify**
+
+Reload. Confirm the `.cashflow-timeline` shows 4 evenly-spaced points along a horizontal line with red (outflow, year 0) and teal (inflow, years 1–3) amounts, and the rate-up/rate-down `.compare-grid` cards render side by side.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add blog/nhap-mon-chung-khoan/index.html
+git commit -m "feat(nhap-mon-chung-khoan): add section 5 — bonds"
+```
+
+---
+
+## Task 8: Section 6 — Quỹ đầu tư & Chứng chỉ quỹ
+
+**Files:**
+- Modify: `blog/nhap-mon-chung-khoan/index.html`
+
+**Interfaces:**
+- Consumes: `.org-map`, `.compare-grid`, `.bar-chart`/`.bar-row`/`.bar-track`/`.bar-fill` (from Task 2), `.decision-tree`/`.dt-*` (pattern established in Task 3), `.deep-dive`
+- Produces: `<h2 id="s6">`, `<h3 id="s6-1">`..`<h3 id="s6-7">`
+
+- [ ] **Step 1: Insert Section 6 HTML**
+
+```html
+        <h2 id="s6">6. Quỹ đầu tư & Chứng chỉ quỹ: "thuê chuyên gia" đầu tư hộ</h2>
+
+        <h3 id="s6-1">6.1. Vấn đề quỹ đầu tư giải quyết</h3>
+        <p>Tự đầu tư cổ phiếu đòi hỏi 3 thứ người mới thường thiếu: <strong>kiến thức</strong>, <strong>thời gian</strong>, và <strong>vốn đủ lớn để đa dạng hóa</strong>. <strong>Quỹ đầu tư (investment fund)</strong> giải cả 3: nhiều người góp tiền vào một "rổ chung", thuê <strong>công ty quản lý quỹ</strong> chuyên nghiệp vận hành, mỗi người nắm <strong>chứng chỉ quỹ (CCQ)</strong> đại diện phần góp. Với vài trăm nghìn đồng mua CCQ, bạn đã gián tiếp sở hữu danh mục vài chục cổ phiếu/trái phiếu — mức đa dạng hóa mà tự mua lẻ cần cả trăm triệu mới đạt được.</p>
+
+        <h3 id="s6-2">6.2. Cấu trúc an toàn của một quỹ</h3>
+        <p>Điểm khiến quỹ được cấp phép khác hẳn "app ủy thác" trôi nổi: <strong>người ra quyết định đầu tư và người giữ tài sản là hai tổ chức tách biệt, giám sát chéo lẫn nhau</strong>.</p>
+
+        <div class="org-map">
+            <div class="org-node org-node--accent"><span class="org-node-icon">👤</span><span>Nhà đầu tư mua chứng chỉ quỹ</span></div>
+            <div class="org-arrow-down">↓ tiền</div>
+            <div class="org-node"><span class="org-node-icon">⚙️</span><span>Công ty quản lý quỹ<span class="org-node-sub">ra quyết định mua gì, bán gì</span></span></div>
+            <div class="org-arrow-down">↓ lệnh đầu tư</div>
+            <div class="org-node"><span class="org-node-icon">📊</span><span>Danh mục của quỹ<span class="org-node-sub">cổ phiếu + trái phiếu + tiền gửi</span></span></div>
+            <div class="org-arrow-down">↑ giữ &amp; đối soát độc lập</div>
+            <div class="org-node"><span class="org-node-icon">🗄️</span><span>Ngân hàng giám sát<span class="org-node-sub">GIỮ toàn bộ tài sản quỹ — công ty QLQ không được trực tiếp cầm tiền</span></span></div>
+            <div class="oversight-banner">🛡️ <strong>UBCKNN</strong> cấp phép &amp; giám sát <strong>cả</strong> công ty quản lý quỹ <strong>và</strong> ngân hàng giám sát</div>
+        </div>
+
+        <div class="callout callout-info">
+            <div class="callout-title">💡 Checklist tối thiểu trước khi bỏ tiền vào bất kỳ "quỹ" nào</div>
+            <p>Quỹ và công ty quản lý quỹ có tên trong danh sách được <strong>UBCKNN cấp phép</strong> (tra tại ssc.gov.vn)? Có <strong>ngân hàng giám sát</strong> rõ ràng? Có công bố <strong>báo cáo NAV định kỳ</strong>? Thiếu một trong ba → không phải quỹ hợp pháp, đó là hụi/ủy thác rủi ro cao (Phần 9).</p>
+        </div>
+
+        <h3 id="s6-3">6.3. NAV — "giá" của một chứng chỉ quỹ</h3>
+        <p><strong>NAV (Net Asset Value)</strong> = tổng tài sản của quỹ trừ nợ phải trả. Chia cho số CCQ lưu hành ra <strong>NAV/CCQ</strong>. Ví dụ: Quỹ X tổng tài sản 1.020 tỷ, nợ 20 tỷ → NAV = 1.000 tỷ; đang lưu hành 50 triệu CCQ → NAV/CCQ = <strong>20.000đ</strong>. Bạn đầu tư 100tr → nhận 5.000 CCQ. Một năm sau NAV/CCQ = 23.000đ → tài sản của bạn = 5.000 × 23.000 = <strong>115 triệu (+15%)</strong>.</p>
+
+        <h3 id="s6-4">6.4. Ba "hình dạng" quỹ phổ biến</h3>
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Tiêu chí</th><th>Quỹ mở</th><th>Quỹ đóng</th><th>ETF</th></tr></thead>
+                <tbody>
+                    <tr><td>Mua/bán ở đâu</td><td>Trực tiếp với quỹ (app CTCK, Fmarket...)</td><td>Trên sàn như cổ phiếu</td><td><strong>Trên sàn</strong>, theo lô 100</td></tr>
+                    <tr><td>Giá giao dịch</td><td>Đúng theo NAV kỳ định giá</td><td>Giá thị trường, có thể lệch xa NAV</td><td>Giá thị trường nhưng bám sát NAV</td></tr>
+                    <tr><td>Phát hành thêm CCQ khi bạn mua?</td><td>Có (co giãn)</td><td>Không (cố định sau IPO)</td><td>Có (hoán đổi)</td></tr>
+                    <tr><td>Chiến lược điển hình</td><td>Chủ động</td><td>Chủ động</td><td><strong>Thụ động</strong> — mô phỏng chỉ số</td></tr>
+                    <tr><td>Phí quản lý điển hình</td><td>~1–2%/năm</td><td>~1–2%/năm</td><td>Thấp hơn hẳn, &lt;~0,8%/năm</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="compare-grid">
+            <div class="compare-col compare-col--a">
+                <div class="compare-col-title">🎯 Chủ động (active)</div>
+                <p>Đội chuyên gia chọn lọc cổ phiếu để <strong>thắng chỉ số tham chiếu</strong>. Phí cao hơn, không phải quỹ nào cũng thắng chỉ số bền bỉ.</p>
+            </div>
+            <div class="compare-col compare-col--b">
+                <div class="compare-col-title">📉 Thụ động (passive / ETF)</div>
+                <p>Không cố thông minh hơn thị trường — <strong>mô phỏng đúng một chỉ số</strong>. Phí rẻ, minh bạch, "mua cả thị trường trong một mã". Thống kê dài hạn: phần lớn quỹ chủ động <strong>không</strong> thắng nổi chỉ số sau phí — ETF chi phí thấp là điểm khởi đầu hợp lý cho người mới.</p>
+            </div>
+        </div>
+
+        <h3 id="s6-5">6.5. Phí của quỹ — kẻ gặm nhấm thầm lặng</h3>
+        <p><strong>Phí quản lý</strong> (~1–2%/năm với quỹ cổ phiếu chủ động — trừ thẳng vào NAV nên "không thấy đau"), <strong>phí mua</strong> (nhiều quỹ mở hiện miễn), <strong>phí bán</strong> (0–2%, giảm dần theo thời gian nắm giữ — khuyến khích đầu tư dài hạn).</p>
+
+        <div class="deep-dive">
+            <div class="deep-dive-label">🔬 Deep Dive</div>
+            <div class="deep-dive-title">1,5% phí mỗi năm "ăn" của bạn bao nhiêu sau 20 năm?</div>
+            <div class="deep-dive-audience">Dành cho: người đang so sánh phí giữa các quỹ</div>
+            <p>Hai quỹ cùng đạt lợi suất gộp 12%/năm, chỉ khác tổng phí: quỹ A phí 0,5%/năm (ròng 11,5%), quỹ B phí 2%/năm (ròng 10%). Bỏ 100 triệu, giữ 20 năm:</p>
+            <div class="bar-chart">
+                <div class="bar-row"><span class="bar-label">Quỹ A (ròng 11,5%)</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><span class="bar-value">~882tr</span></div>
+                <div class="bar-row"><span class="bar-label">Quỹ B (ròng 10%)</span><div class="bar-track"><div class="bar-fill" style="width:76%"></div></div><span class="bar-value">~673tr</span></div>
+            </div>
+            <p>Chênh lệch <strong>~209 triệu — chỉ vì 1,5% phí/năm</strong>, bị lãi kép "phóng đại" thành khác biệt khổng lồ. Bài học: <strong>phí là một trong số rất ít thứ bạn kiểm soát chắc chắn được</strong> — hãy xem nó kỹ như xem lợi nhuận quá khứ.</p>
+        </div>
+
+        <div class="deep-dive">
+            <div class="deep-dive-label">🔬 Deep Dive</div>
+            <div class="deep-dive-title">Vì sao giá ETF luôn bám sát NAV?</div>
+            <div class="deep-dive-audience">Dành cho: người tò mò về cơ chế ETF</div>
+            <p>ETF có cơ chế <strong>hoán đổi (creation/redemption)</strong> với các tổ chức lớn (Authorized Participant): họ mang <strong>rổ cổ phiếu đúng cơ cấu chỉ số</strong> đổi lấy CCQ ETF, hoặc ngược lại. Nếu giá ETF trên sàn cao hơn NAV, các tổ chức này lập tức tạo thêm CCQ để ăn chênh lệch (<strong>arbitrage</strong>) — hành động đó tự động kéo giá về sát NAV. Kết quả: nhà đầu tư nhỏ lẻ được hưởng sản phẩm linh hoạt như cổ phiếu nhưng giá luôn "neo" vào giá trị thật của rổ tài sản.</p>
+        </div>
+
+        <h3 id="s6-6">6.6. DCA — chiến lược trung bình giá</h3>
+        <p><strong>DCA (Dollar-Cost Averaging)</strong>: đầu tư <strong>một số tiền cố định, đều đặn theo chu kỳ</strong>, bất kể thị trường tăng hay giảm — tự động mua nhiều đơn vị hơn khi giá rẻ, ít hơn khi giá đắt. Ví dụ DCA 2 triệu/tháng:</p>
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Tháng</th><th>Giá CCQ</th><th>Số CCQ mua được</th></tr></thead>
+                <tbody>
+                    <tr><td>1</td><td>20.000đ</td><td>100</td></tr>
+                    <tr><td>2</td><td>16.000đ (thị trường giảm 😱)</td><td><strong>125</strong></td></tr>
+                    <tr><td>3</td><td>25.000đ</td><td>80</td></tr>
+                    <tr><td><strong>Tổng</strong></td><td>Giá TB cộng: 20.333đ</td><td>305 CCQ, vốn 6tr → <strong>giá vốn thực: 19.672đ/CCQ</strong></td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p>Giá vốn thực (19.672đ) <strong>thấp hơn</strong> trung bình cộng của giá (20.333đ) — "phép màu" cơ học của DCA. Quan trọng hơn: DCA <strong>loại bỏ nhu cầu đoán đỉnh–đáy</strong> và biến cú giảm thành "đợt khuyến mãi gom hàng". Hầu hết nền tảng đều có <strong>SIP (đầu tư định kỳ tự động)</strong> — hãy bật nó lên để kỷ luật thay bạn làm việc.</p>
+
+        <h3 id="s6-7">6.7. Tự chọn cổ phiếu hay mua quỹ? — Cây quyết định</h3>
+        <p>Lưu ý: chọn quỹ <strong>không phải</strong> phương án "hạng hai" — với đa số người bận rộn, đó là phương án tối ưu.</p>
+
+        <div class="decision-tree">
+            <div class="dt-node dt-node--start dt-reveal">🚀 Có tiền nhàn rỗi, muốn đầu tư dài hạn</div>
+            <div class="dt-connector"></div>
+            <div class="dt-node dt-node--question dt-reveal">❓ Có ≥5–10 giờ/tuần để nghiên cứu doanh nghiệp?</div>
+            <div class="dt-branches">
+                <div class="dt-branch">
+                    <span class="dt-branch-label dt-branch-label--no">Không</span>
+                    <div class="dt-node dt-node--success dt-reveal">✅ Quỹ mở / ETF + DCA định kỳ (để chỉ số và chuyên gia làm việc)</div>
+                </div>
+                <div class="dt-branch">
+                    <span class="dt-branch-label dt-branch-label--yes">Có</span>
+                    <div class="dt-node dt-node--question dt-reveal">❓ Đọc hiểu được báo cáo tài chính?</div>
+                    <div class="dt-connector"></div>
+                    <div class="dt-branches">
+                        <div class="dt-branch">
+                            <span class="dt-branch-label dt-branch-label--no">Chưa</span>
+                            <div class="dt-node dt-node--warning dt-reveal">⚙️ Bắt đầu bằng ETF/quỹ, học phân tích song song (Phần 7)</div>
+                        </div>
+                        <div class="dt-branch">
+                            <span class="dt-branch-label dt-branch-label--yes">Được</span>
+                            <div class="dt-node dt-node--question dt-reveal">❓ Chịu được TK giảm 30–50% mà không hoảng bán?</div>
+                            <div class="dt-connector"></div>
+                            <div class="dt-branches">
+                                <div class="dt-branch">
+                                    <span class="dt-branch-label dt-branch-label--no">Không chắc</span>
+                                    <div class="dt-node dt-node--warning dt-reveal">⚠️ Chỉ dành tỷ trọng nhỏ cho cổ phiếu lẻ, phần lớn vẫn nên ở quỹ</div>
+                                </div>
+                                <div class="dt-branch">
+                                    <span class="dt-branch-label dt-branch-label--yes">Chịu được</span>
+                                    <div class="dt-node dt-node--success dt-reveal">✅ Tự xây danh mục cổ phiếu (vẫn phải đa dạng hóa — Phần 9)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p>Một số cái tên để bạn <strong>tự tìm hiểu thêm</strong> (chỉ minh họa, <em>không phải</em> khuyến nghị): ETF nội như E1VFVN30, FUEVFVND; quỹ mở cổ phiếu như DCDS, VESAF, SSI-SCA, VCBF-BCF; quỹ mở trái phiếu như TCBF, DCBF. Khi so sánh, nhìn: chiến lược, hiệu suất 3–5 năm so với chỉ số, <strong>tổng chi phí</strong>, quy mô quỹ và uy tín công ty quản lý.</p>
+
+        <hr>
+```
+
+Append to `.toc-list`:
+
+```html
+            <li><a href="#s6">6. Quỹ đầu tư</a></li>
+            <li class="toc-h3"><a href="#s6-3">6.3 NAV</a></li>
+            <li class="toc-h3"><a href="#s6-6">6.6 DCA</a></li>
+            <li class="toc-h3"><a href="#s6-7">6.7 Tự chọn CP hay mua quỹ?</a></li>
+```
+
+- [ ] **Step 2: Verify**
+
+Reload. Confirm the fund-structure `.org-map` renders with the "↑ giữ & đối soát độc lập" arrow label between portfolio and supervisory-bank nodes, the fee-erosion `.bar-chart` shows two bars with the shorter one (Quỹ B) visibly shorter than Quỹ A, and the 6.7 decision-tree correctly nests two levels of branching under the "Có" branch (3 sequential question gates total, each collapsing to single-column under 600px).
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add blog/nhap-mon-chung-khoan/index.html
+git commit -m "feat(nhap-mon-chung-khoan): add section 6 — investment funds"
+```
+
+---
+
+## Task 9: Section 7 — Phân tích cơ bản
+
+**Files:**
+- Modify: `blog/nhap-mon-chung-khoan/index.html`
+
+**Interfaces:**
+- Consumes: `.blog-table`, `.deep-dive` (existing)
+- Produces: `<h2 id="s7">`, `<h3 id="s7-1">`, `<h3 id="s7-2">`
+
+- [ ] **Step 1: Insert Section 7 HTML**
+
+```html
+        <h2 id="s7">7. Phân tích cơ bản: đọc sức khỏe doanh nghiệp qua con số</h2>
+        <p><strong>Phân tích cơ bản (fundamental analysis)</strong> trả lời hai câu hỏi: doanh nghiệp này có <strong>TỐT</strong> không? và giá hiện tại có <strong>RẺ</strong> so với giá trị thật không? Một công ty tốt mua ở giá quá đắt vẫn là khoản đầu tư tồi.</p>
+
+        <h3 id="s7-1">7.1. Ba báo cáo tài chính</h3>
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Báo cáo</th><th>Trả lời câu hỏi</th><th>Ví như</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Bảng cân đối kế toán</strong></td><td>Đang có gì (tài sản) và nợ ai bao nhiêu? Phần dôi ra = vốn chủ sở hữu</td><td>Chụp X-quang khối tài sản tại một thời điểm</td></tr>
+                    <tr><td><strong>Báo cáo kết quả kinh doanh</strong></td><td>Kỳ vừa rồi kiếm/tiêu/lãi bao nhiêu?</td><td>Bảng lương – chi tiêu cả năm</td></tr>
+                    <tr><td><strong>Báo cáo lưu chuyển tiền tệ</strong></td><td>Tiền mặt thật ra–vào thế nào?</td><td>Sao kê tài khoản ngân hàng</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="callout callout-info">
+            <div class="callout-title">💡 Vì sao cần cả báo cáo lưu chuyển tiền tệ?</div>
+            <p>Lợi nhuận kế toán có thể "đẹp trên giấy" (bán chịu chưa thu tiền), nhưng <strong>tiền mặt thì khó nói dối</strong>. Doanh nghiệp lãi lớn nhiều năm nhưng dòng tiền kinh doanh liên tục âm là lá cờ đỏ kinh điển.</p>
+        </div>
+
+        <h3 id="s7-2">7.2. Bộ chỉ số "vỡ lòng" — ví dụ xuyên suốt</h3>
+        <p><strong>Công ty ABC:</strong> lợi nhuận sau thuế 500 tỷ/năm; 100 triệu cổ phiếu lưu hành; vốn chủ sở hữu 3.000 tỷ; tổng nợ 2.400 tỷ; giá thị trường 60.000đ/CP; cổ tức tiền mặt 3.000đ/CP/năm.</p>
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Chỉ số</th><th>Công thức</th><th>Tính cho ABC</th><th>Cách đọc</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>EPS</strong></td><td>LN sau thuế ÷ số CP</td><td>500 tỷ ÷ 100 triệu = <strong>5.000đ</strong></td><td>Mỗi CP "làm ra" 5.000đ lợi nhuận/năm</td></tr>
+                    <tr><td><strong>P/E</strong></td><td>Giá ÷ EPS</td><td>60.000 ÷ 5.000 = <strong>12</strong></td><td>Trả 12 đồng cho mỗi 1 đồng lợi nhuận/năm; ~12 năm "hoàn vốn" nếu LN đứng yên</td></tr>
+                    <tr><td><strong>BVPS</strong></td><td>Vốn CSH ÷ số CP</td><td>3.000 tỷ ÷ 100tr = <strong>30.000đ</strong></td><td>Tài sản ròng ứng với mỗi CP</td></tr>
+                    <tr><td><strong>P/B</strong></td><td>Giá ÷ BVPS</td><td>60.000 ÷ 30.000 = <strong>2</strong></td><td>Thị trường trả gấp 2 lần giá trị sổ sách</td></tr>
+                    <tr><td><strong>ROE</strong></td><td>LN sau thuế ÷ vốn CSH</td><td>500 ÷ 3.000 = <strong>16,7%</strong></td><td>Mỗi 100đ vốn cổ đông tạo 16,7đ lãi/năm — "tay nghề" ban lãnh đạo</td></tr>
+                    <tr><td><strong>Tỷ suất cổ tức</strong></td><td>Cổ tức ÷ giá</td><td>3.000 ÷ 60.000 = <strong>5%</strong></td><td>Dòng tiền "như gửi tiết kiệm" trên giá mua</td></tr>
+                    <tr><td><strong>D/E</strong></td><td>Tổng nợ ÷ vốn CSH</td><td>2.400 ÷ 3.000 = <strong>0,8</strong></td><td>Càng cao càng rủi ro — <strong>luôn so trong cùng ngành</strong></td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p>Cách dùng đúng: <strong>(1)</strong> so trong cùng ngành — P/E 12 đắt với ngành thép chu kỳ nhưng có thể rẻ với công nghệ tăng trưởng; <strong>(2)</strong> so với chính lịch sử của doanh nghiệp; <strong>(3)</strong> nhìn xu hướng nhiều năm, không nhìn một quý; <strong>(4)</strong> không chỉ số nào đứng một mình đủ để ra quyết định — chúng là bộ câu hỏi mở đầu, không phải câu trả lời cuối cùng.</p>
+
+        <div class="deep-dive">
+            <div class="deep-dive-label">🔬 Deep Dive</div>
+            <div class="deep-dive-title">Ba cái bẫy kinh điển của P/E thấp</div>
+            <div class="deep-dive-audience">Dành cho: người mới nghĩ "P/E thấp = rẻ = mua"</div>
+            <p><strong>1. Bẫy lợi nhuận đột biến:</strong> E phình to nhờ khoản bất thường (bán đất, hoàn nhập dự phòng) khiến P/E <em>trông</em> thấp — năm sau khoản đó biến mất, P/E "thật" cao vọt. <strong>2. Bẫy đỉnh chu kỳ:</strong> với ngành chu kỳ (thép, phân bón, vận tải biển), P/E thấp nhất thường xuất hiện <strong>ngay đỉnh lợi nhuận</strong> — gần đỉnh giá. <strong>3. Bẫy giá trị (value trap):</strong> doanh nghiệp trong ngành đang chết dần — P/E thấp năm này qua năm khác vì triển vọng thực sự tệ, rẻ mãi vẫn hoàn rẻ.</p>
+            <p>Bài học chung: <strong>giá phản ánh kỳ vọng tương lai, còn E trong P/E là quá khứ.</strong> Câu hỏi đúng luôn là "lợi nhuận <em>sắp tới</em> sẽ ra sao?".</p>
+        </div>
+
+        <hr>
+```
+
+Append to `.toc-list`:
+
+```html
+            <li><a href="#s7">7. Phân tích cơ bản</a></li>
+            <li class="toc-h3"><a href="#s7-2">7.2 Bộ chỉ số vỡ lòng</a></li>
+```
+
+- [ ] **Step 2: Verify**
+
+Reload and confirm both tables render (7-row ratio table scrolls horizontally on narrow viewports via `.blog-table-wrapper`'s `overflow-x:auto`, not clipped).
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add blog/nhap-mon-chung-khoan/index.html
+git commit -m "feat(nhap-mon-chung-khoan): add section 7 — fundamental analysis"
+```
+
+---
+
+## Task 10: Section 8 — Phân tích kỹ thuật
+
+**Files:**
+- Modify: `blog/nhap-mon-chung-khoan/index.html`
+
+**Interfaces:**
+- Consumes: `.diagram-box` + `<pre>`, `.spring-phases`, `.blog-table`, `.callout`
+- Produces: `<h2 id="s8">`, `<h3 id="s8-1">`..`<h3 id="s8-6">`
+
+- [ ] **Step 1: Insert Section 8 HTML**
+
+```html
+        <h2 id="s8">8. Phân tích kỹ thuật: nến, chỉ báo, Fibonacci (và lời cảnh báo)</h2>
+        <p><strong>Phân tích kỹ thuật (PTKT)</strong> nghiên cứu đồ thị giá/khối lượng quá khứ để phán đoán xu hướng. Nếu phân tích cơ bản hỏi <em>"mua CÁI GÌ?"</em> thì PTKT hỏi <em>"mua/bán KHI NÀO?"</em></p>
+
+        <h3 id="s8-1">8.1. Bốn khái niệm nền</h3>
+        <p><strong>Nến Nhật (candlestick):</strong> mỗi cây nến tóm tắt một phiên bằng 4 giá — mở cửa, cao nhất, thấp nhất, đóng cửa.</p>
+        <div class="diagram-box"><pre>         NẾN TĂNG (xanh)                    NẾN GIẢM (đỏ)
+              │  ◄─ Giá CAO nhất phiên           │  ◄─ Giá CAO nhất
+              │     (râu trên)                   │
+          ┌───┴───┐ ◄─ Giá ĐÓNG cửa          ┌───┴───┐ ◄─ Giá MỞ cửa
+          │       │                          │▒▒▒▒▒▒▒│
+          │ thân  │   đóng > mở              │▒thân ▒│   đóng < mở
+          │ nến   │   → phe MUA thắng        │▒nến  ▒│   → phe BÁN thắng
+          └───┬───┘ ◄─ Giá MỞ cửa            └───┬───┘ ◄─ Giá ĐÓNG cửa
+              │     (râu dưới)                   │
+              │  ◄─ Giá THẤP nhất phiên          │  ◄─ Giá THẤP nhất</pre></div>
+        <p><strong>Khối lượng (volume):</strong> "cường độ dòng tiền" — giá tăng kèm volume lớn đáng tin hơn giá tăng trong im lặng. <strong>Đường trung bình động (MA):</strong> trung bình giá N phiên (MA20≈1 tháng, MA50, MA200≈1 năm) để "lọc nhiễu". <strong>Hỗ trợ/kháng cự:</strong> vùng giá nơi lực mua/bán từng nhiều lần xuất hiện — "vùng ký ức" tâm lý đám đông.</p>
+
+        <h3 id="s8-2">8.2. Loại biểu đồ & khung thời gian</h3>
+        <p><strong>Biểu đồ đường</strong> nối các giá đóng cửa — sạch mắt, hợp nhìn xu hướng dài; <strong>biểu đồ nến</strong> cho đủ 4 giá — mặc định của dân phân tích. <strong>Khung thời gian:</strong> nến ngày (D1) là chuẩn cho nhà đầu tư; nến tuần (W1) nhìn xu hướng lớn; khung phút/giờ là sân của trader lướt sóng. <strong>Quy luật:</strong> khung càng nhỏ, tín hiệu càng nhiễu.</p>
+        <div class="callout callout-info">
+            <div class="callout-title">💡 Thiết lập gợi ý cho người mới</div>
+            <p><strong>Nến D1 + cột volume bên dưới + đường MA20 và MA200.</strong> Màn hình càng nhiều chỉ báo chồng chéo, quyết định càng loạn (mục 8.6).</p>
+        </div>
+
+        <h3 id="s8-3">8.3. Các mô hình nến kinh điển</h3>
+        <div class="diagram-box"><pre>   DOJI — lưỡng lự           BÚA (hammer)                 SAO BĂNG (shooting star)
+   mở cửa ≈ đóng cửa         tín hiệu đảo chiều TĂNG      tín hiệu đảo chiều GIẢM
+   thị trường phân vân       khi xuất hiện ở VÙNG ĐÁY     khi xuất hiện ở VÙNG ĐỈNH
+
+         │                        ┌──┐  thân nhỏ               │
+      ───┼───                     └┬─┘  nằm trên            ───┤   râu trên dài
+         │                         │                           │   (phe mua đuối sức)
+         │                         │  râu dưới dài          ┌──┴┐  thân nhỏ
+                                   │  ≥ 2 lần thân          └───┘  nằm dưới
+                              (phe bán đạp sâu nhưng
+                               phe mua kéo ngược lại)
+
+   NHẤN CHÌM TĂNG (bullish engulfing)     NHẤN CHÌM GIẢM (bearish engulfing)
+   nến XANH nuốt trọn nến đỏ trước —      nến ĐỎ nuốt trọn nến xanh trước —
+   phe mua áp đảo, tin cậy hơn ở đáy      phe bán áp đảo, tin cậy hơn ở đỉnh
+
+          ┌─────┐                                ┌─────┐
+    ┌──┐  │     │                          ┌──┐  │▒▒▒▒▒│
+    │▒▒│  │     │                          │  │  │▒▒▒▒▒│
+    └──┘  │     │                          └──┘  │▒▒▒▒▒│
+          └─────┘                                └─────┘</pre></div>
+        <p>Ba nguyên tắc đọc mô hình nến các khóa học "3 ngày thành trader" thường lờ đi: <strong>(1)</strong> bối cảnh quyết định ý nghĩa — cây búa chỉ đáng chú ý sau nhịp giảm, tại vùng hỗ trợ; <strong>(2)</strong> volume là chữ ký xác nhận; <strong>(3)</strong> xác suất, không phải chắc chắn — mô hình nến chỉ nghiêng xác suất vài chục %, không bao giờ 100%.</p>
+
+        <h3 id="s8-4">8.4. Fibonacci — từ dãy số đến các mức thoái lui</h3>
+        <p>Dãy Fibonacci: 1, 1, 2, 3, 5, 8, 13, 21, 34... (mỗi số = tổng hai số liền trước); tỷ lệ hai số liên tiếp tiến dần về <strong>1,618 ("tỷ lệ vàng")</strong>. Công cụ phổ biến nhất: <strong>Fibonacci thoái lui (retracement)</strong> — "sau một nhịp tăng mạnh, giá thường điều chỉnh về đâu trước khi đi tiếp?"</p>
+        <div class="diagram-box"><pre> Giá
+  ▲                              ĐỈNH nhịp tăng: 100.000 ── mức 0%
+  │                          ▲▲▲
+  │                       ▲▲▲   ▼ giá quay đầu điều chỉnh
+  │   23,6% ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─  88.200
+  │   38,2% ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─  80.900   ◄─ các "bậc thang"
+  │   50,0% ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─  75.000      hỗ trợ TIỀM NĂNG
+  │   61,8% ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─  69.100   ◄─ "mức vàng" được
+  │           ▲▲▲                                     theo dõi nhiều nhất
+  │        ▲▲▲
+  │   ĐÁY nhịp tăng: 50.000 ──────────── mức 100%
+  └──────────────────────────────────────────► Thời gian
+  (nhịp tăng 50.000 → 100.000; thoái lui 38,2%
+   = 100.000 − 0,382 × 50.000 = 80.900)</pre></div>
+        <p>Người mới chỉ cần biết <strong>retracement</strong> là đủ. Mức 50% thực ra <strong>không thuộc dãy Fibonacci</strong> — thêm vào theo thói quen quan sát. Vì sao đôi khi "linh nghiệm"? Một phần là <strong>lời tiên tri tự ứng nghiệm</strong>: hàng triệu trader cùng kẻ cùng mức đó, cùng đặt lệnh quanh đó → vùng giá có phản ứng thật. Coi các mức Fibonacci như <strong>"vùng đáng chú ý"</strong> để quan sát phản ứng giá + volume, tuyệt đối không phải mức "chắc chắn bật lên".</p>
+
+        <h3 id="s8-5">8.5. Ba chỉ báo bạn sẽ thấy trên mọi app</h3>
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Chỉ báo</th><th>Nó đo cái gì</th><th>Cách đọc phổ biến</th><th>Cái bẫy cần biết</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>RSI</strong></td><td>"Độ nóng" đà tăng/giảm, thang 0–100 (14 phiên)</td><td>&gt;70: quá mua; &lt;30: quá bán</td><td>Trong xu hướng mạnh, RSI có thể nằm lì &gt;70 hàng tuần mà giá vẫn tăng — không phải lệnh bán tự động</td></tr>
+                    <tr><td><strong>MACD</strong></td><td>Động lượng, khoảng cách EMA 12 & 26 + đường tín hiệu EMA 9</td><td>Cắt lên: tích cực; cắt xuống: ngược lại</td><td>Chỉ báo <strong>trễ</strong> — tín hiệu thường đến <em>sau</em> khi giá đã chạy một đoạn</td></tr>
+                    <tr><td><strong>Bollinger Bands</strong></td><td>"Độ căng" của giá: dải giữa MA20, ±2 độ lệch chuẩn</td><td>Bám dải trên: mạnh nhưng căng; bóp hẹp: sắp bung mạnh</td><td>Chạm dải trên/dưới <strong>không</strong> tự động là đảo chiều</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="callout callout-warn">
+            <div class="callout-title">💡 Quy tắc chống "nghiện chỉ báo"</div>
+            <p>Mọi chỉ báo đều được tính ra từ chính giá và volume quá khứ — chồng 10 chỉ báo không tạo thêm thông tin mới, chỉ tạo thêm tiếng ồn. Tối đa 2–3 chỉ báo, và phải hiểu công thức đằng sau từng cái mình dùng.</p>
+        </div>
+
+        <h3 id="s8-6">8.6. Thực hành thực tế — lộ trình luyện tay nghề không tốn học phí</h3>
+        <div class="spring-phases">
+            <div class="spring-phase">
+                <div class="spring-phase-left"><div class="spring-phase-num">1</div><div class="spring-phase-line"></div></div>
+                <div class="spring-phase-body">
+                    <div class="spring-phase-title">Tuần 1–2 — luyện mắt, không giao dịch</div>
+                    <ul class="spring-phase-items">
+                        <li>Mở biểu đồ nến D1 trên app CTCK (TradingView miễn phí cũng đủ dùng)</li>
+                        <li>Chọn 5 CP trong VN30: kẻ 2 vùng hỗ trợ/kháng cự, đánh dấu 3 mô hình nến trong 6 tháng, kẻ thử một Fibonacci retracement</li>
+                        <li>Xem <em>điều gì thực sự xảy ra sau đó</em> — tự thấy tỷ lệ "linh nghiệm" khiêm tốn thế nào</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="spring-phase">
+                <div class="spring-phase-left"><div class="spring-phase-num">2</div><div class="spring-phase-line"></div></div>
+                <div class="spring-phase-body">
+                    <div class="spring-phase-title">Tuần 3–8 — giao dịch trên giấy (paper trading)</div>
+                    <ul class="spring-phase-items">
+                        <li>Lập sổ (Excel): ngày, mã, lý do vào lệnh, giá vào, <strong>mức dừng lỗ viết trước</strong>, mục tiêu, kết quả sau 2–4 tuần</li>
+                        <li>"Giao dịch" 10–20 lệnh giả định rồi tổng kết tỷ lệ đúng — dữ liệu thật về <em>chính bạn</em></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="spring-phase">
+                <div class="spring-phase-left"><div class="spring-phase-num">3</div></div>
+                <div class="spring-phase-body">
+                    <div class="spring-phase-title">Tiền thật — liều lượng thuốc thử</div>
+                    <ul class="spring-phase-items">
+                        <li>Chỉ sau khi sổ giấy cho kết quả ổn định, thử vị thế <strong>rất nhỏ</strong> (≤5% phần danh mục "học tập")</li>
+                        <li>Kỷ luật sắt: mọi lệnh có lý do + mức dừng lỗ viết trước; khớp xong chép vào nhật ký (mục 9.3)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="callout callout-warn">
+            <div class="callout-title">⚠️ Lời cảnh báo quan trọng</div>
+            <p><strong>1.</strong> PTKT là công cụ <strong>xác suất</strong>, không phải quả cầu tiên tri — không tồn tại chỉ báo "chén thánh". <strong>2.</strong> Người mới lạm dụng PTKT dễ trượt vào <strong>giao dịch quá độ (overtrading)</strong> — phí + thuế + trượt giá ăn mòn tài khoản (Phần 10), và cấu trúc T+2 của TTCK VN cũng chống lại lối chơi này. <strong>3.</strong> Nền tảng ra quyết định nên là <strong>phân tích cơ bản + phân bổ tài sản + DCA</strong>; PTKT (nếu dùng) chỉ đóng vai trò phụ trợ chọn thời điểm, sau khi đã vững phần gốc.</p>
+        </div>
+
+        <hr>
+```
+
+Append to `.toc-list`:
+
+```html
+            <li><a href="#s8">8. Phân tích kỹ thuật</a></li>
+            <li class="toc-h3"><a href="#s8-4">8.4 Fibonacci</a></li>
+            <li class="toc-h3"><a href="#s8-5">8.5 RSI · MACD · Bollinger</a></li>
+            <li class="toc-h3"><a href="#s8-6">8.6 Lộ trình luyện tập</a></li>
+```
+
+- [ ] **Step 2: Verify**
+
+Reload. Confirm both ASCII-art `.diagram-box` blocks preserve exact character alignment (box-drawing lines, indentation) with no line-wrapping, and the 3-stage `.spring-phases` renders correctly under section 8.6.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add blog/nhap-mon-chung-khoan/index.html
+git commit -m "feat(nhap-mon-chung-khoan): add section 8 — technical analysis"
+```
+
+---
+
+## Task 11: Section 9 — Rủi ro, tâm lý đầu tư & nhận diện lừa đảo
+
+**Files:**
+- Modify: `blog/nhap-mon-chung-khoan/index.html`
+
+**Interfaces:**
+- Consumes: `.bar-chart` (Task 2), `.donut-chart`/`.donut-legend` (Task 2), `.flow-diagram`/`.flow-node`/`.flow-connector`/`.flow-step-card`/`.flow-step` (existing, note every diagram piece carries **both** its specific class and the generic `flow-step` class so the shared reveal animation and connector-height rule both apply — this is the same dual-class pattern already used in `blog/loose-coupling-spring-boot/index.html`), `.decision-tree` (Task 3/8 pattern), `.blog-table`
+- Produces: `<h2 id="s9">`, `<h3 id="s9-1">`..`<h3 id="s9-4">`
+
+- [ ] **Step 1: Insert Section 9 HTML**
+
+```html
+        <h2 id="s9">9. Rủi ro, tâm lý đầu tư & nhận diện lừa đảo</h2>
+        <p>Đây là phần <strong>quan trọng nhất</strong> của toàn bộ tài liệu. Kiến thức trước đó giúp bạn <em>kiếm tiền</em>; phần này giúp bạn <strong>không mất tiền oan</strong> — trong đầu tư, tránh thua lỗ lớn còn quan trọng hơn tìm thương vụ lãi lớn. Lý do: <strong>lỗ và gỡ không "cân" nhau</strong>:</p>
+
+        <div class="bar-chart">
+            <div class="bar-row"><span class="bar-label">Lỗ 10%</span><div class="bar-track"><div class="bar-fill" style="width:11%"></div></div><span class="bar-value">cần +11%</span></div>
+            <div class="bar-row"><span class="bar-label">Lỗ 20%</span><div class="bar-track"><div class="bar-fill" style="width:25%"></div></div><span class="bar-value">cần +25%</span></div>
+            <div class="bar-row"><span class="bar-label">Lỗ 30%</span><div class="bar-track"><div class="bar-fill" style="width:43%"></div></div><span class="bar-value">cần +43%</span></div>
+            <div class="bar-row"><span class="bar-label">Lỗ 50%</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><span class="bar-value">cần <strong>+100%</strong></span></div>
+        </div>
+        <p style="font-size:0.85rem;color:var(--muted)">Vượt khung biểu đồ: lỗ 70% cần lãi <strong>+233%</strong> để về bờ; lỗ 90% cần lãi <strong>+900%</strong> — phải <em>nhân đôi tài khoản gần 10 lần</em>. Càng lỗ sâu, con dốc phải leo để "về bờ" càng dựng đứng theo cấp số — vì bạn phải gỡ trên phần vốn đã teo lại. Toàn bộ Phần 9 xoay quanh một mục tiêu: <strong>chặn những khoản lỗ lớn trước khi chúng xảy ra.</strong></p>
+
+        <h3 id="s9-1">9.1. Bản đồ rủi ro</h3>
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Loại rủi ro</th><th>Bản chất</th><th>Ví dụ</th><th>Cách phòng thủ chính</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Thị trường (hệ thống)</strong></td><td>Cả thị trường cùng giảm, không chừa ai</td><td>VN-Index −66% (2008), −33% (2022)</td><td>Đầu tư dài hạn, DCA, không dùng tiền sắp cần</td></tr>
+                    <tr><td><strong>Doanh nghiệp (cá biệt)</strong></td><td>Một công ty gặp vấn đề: thua lỗ, gian lận, hủy niêm yết</td><td>CP riêng lẻ có thể mất 80–100% giá trị</td><td><strong>Đa dạng hóa</strong> — không all-in một mã</td></tr>
+                    <tr><td><strong>Thanh khoản</strong></td><td>Muốn bán nhưng không ai mua</td><td>CP nhỏ UPCoM, trái phiếu riêng lẻ</td><td>Ưu tiên tài sản thanh khoản cao khi mới bắt đầu</td></tr>
+                    <tr><td><strong>Lãi suất</strong></td><td>Lãi suất tăng → giá trái phiếu giảm</td><td>Đã học ở Phần 5</td><td>Hiểu chu kỳ, phân bổ nhiều loại tài sản</td></tr>
+                    <tr><td><strong>Lạm phát</strong></td><td>Lợi nhuận danh nghĩa dương nhưng sức mua vẫn giảm</td><td>Tiết kiệm 4% khi lạm phát 4,5%</td><td>Có tỷ trọng tài sản tăng trưởng (CP/quỹ)</td></tr>
+                    <tr><td><strong>Đòn bẩy (margin)</strong></td><td>Vay tiền đầu tư → lỗ khuếch đại, có thể bị bán giải chấp</td><td>Giảm 20% với margin 1:1 → mất ~40% vốn thật</td><td><strong>Năm đầu: không margin.</strong> Chấm hết.</td></tr>
+                    <tr><td><strong>Chính mình</strong></td><td>Cảm xúc phá hỏng kế hoạch: FOMO, hoảng loạn, gồng lỗ</td><td>Mua đỉnh bán đáy — lỗi phổ biến nhất</td><td>Mục 9.3 dành riêng cho "kẻ thù" này</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3 id="s9-2">9.2. Đa dạng hóa — "đừng bỏ hết trứng vào một giỏ"</h3>
+        <p><strong>Đa dạng hóa (diversification)</strong> giảm mạnh rủi ro cá biệt mà không nhất thiết giảm lợi nhuận kỳ vọng, theo <strong>ba chiều</strong>: theo <strong>loại tài sản</strong> (cổ phiếu + trái phiếu/quỹ + tiền gửi); theo <strong>ngành & số lượng mã</strong> (tối thiểu 5–10 mã khác ngành, hoặc 1 CCQ/ETF = tự động 30–50+ mã); theo <strong>thời gian</strong> (DCA thay vì dồn một cục).</p>
+        <p>Ví dụ minh họa cấu trúc danh mục cho người trẻ mới bắt đầu, chấp nhận rủi ro trung bình — <strong>không phải khuyến nghị</strong>, tỷ lệ cụ thể do bạn quyết định theo hoàn cảnh:</p>
+
+        <div class="donut-wrap">
+            <div class="donut-chart" style="background:conic-gradient(var(--primary) 0% 50%, var(--teal) 50% 70%, #ffbb33 70% 90%, var(--glass3) 90% 100%)"></div>
+            <div class="donut-legend">
+                <div class="donut-legend-item"><span class="donut-dot" style="background:var(--primary)"></span>Quỹ cổ phiếu / ETF — <strong>50%</strong></div>
+                <div class="donut-legend-item"><span class="donut-dot" style="background:var(--teal)"></span>Cổ phiếu tự chọn — <strong>20%</strong></div>
+                <div class="donut-legend-item"><span class="donut-dot" style="background:#ffbb33"></span>Quỹ trái phiếu / tiết kiệm — <strong>20%</strong></div>
+                <div class="donut-legend-item"><span class="donut-dot" style="background:var(--glass3);border:1px solid var(--border2)"></span>Tiền mặt chờ cơ hội — <strong>10%</strong></div>
+            </div>
+        </div>
+        <p style="font-size:0.85rem;color:var(--muted)">Logic: phần lõi (quỹ/ETF) tăng trưởng dài hạn ít tốn công; phần cổ phiếu tự chọn để bạn <em>học</em> với quy mô đủ nhỏ để sai lầm không chí mạng; trái phiếu/tiết kiệm là "giảm xóc"; tiền mặt cho bạn <strong>quyền chủ động</strong> khi thị trường hoảng loạn — thay vì là người phải bán, bạn là người được mua rẻ.</p>
+
+        <h3 id="s9-3">9.3. Tâm lý đầu tư — kẻ thù lớn nhất ở trong gương</h3>
+        <p>Với đa số nhà đầu tư cá nhân, thứ gây lỗ nhiều nhất không phải chọn sai cổ phiếu, mà là <strong>hành vi của chính họ</strong>. Cảm xúc của đám đông vận động theo một chu kỳ lặp đi lặp lại:</p>
+
+        <div class="flow-diagram" id="emotion-cycle">
+            <div class="flow-node flow-node--start flow-step"><span class="flow-node-icon">😌</span><div class="flow-node-body"><span class="flow-node-label">Bắt đầu</span><span class="flow-node-title">Lạc quan</span></div></div>
+            <div class="flow-connector flow-step"><div class="flow-connector-line"></div><div class="flow-connector-arrow">▼</div></div>
+            <div class="flow-step-card flow-step"><span class="flow-step-num">2</span><div class="flow-step-content"><span class="flow-step-badge">Giai đoạn B</span><span class="flow-step-name">🤩 Hưng phấn / FOMO</span><span class="flow-step-desc">Ai cũng khoe lãi, tân binh ồ ạt mở tài khoản</span></div></div>
+            <div class="flow-connector flow-step"><div class="flow-connector-line"></div><div class="flow-connector-arrow">▼</div></div>
+            <div class="flow-step-card flow-step" style="border-left-color:#ff7070"><span class="flow-step-num" style="background:linear-gradient(135deg,#ff7070,#ffbb33);-webkit-background-clip:text;background-clip:text">3</span><div class="flow-step-content"><span class="flow-step-badge">Giai đoạn C</span><span class="flow-step-name">🎉 Đỉnh ảo tưởng</span><span class="flow-step-desc">"Lần này khác rồi!" — rủi ro <strong>CAO NHẤT</strong> nhưng đám đông mua <strong>NHIỀU NHẤT</strong></span></div></div>
+            <div class="flow-connector flow-step"><div class="flow-connector-line"></div><div class="flow-connector-arrow">▼</div></div>
+            <div class="flow-step-card flow-step"><span class="flow-step-num">4</span><div class="flow-step-content"><span class="flow-step-badge">Giai đoạn D</span><span class="flow-step-name">😰 Lo lắng, phủ nhận</span><span class="flow-step-desc">Giá quay đầu — "chỉ điều chỉnh thôi mà"</span></div></div>
+            <div class="flow-connector flow-step"><div class="flow-connector-line"></div><div class="flow-connector-arrow">▼</div></div>
+            <div class="flow-step-card flow-step" style="border-left-color:#ff7070"><span class="flow-step-num" style="background:linear-gradient(135deg,#ff7070,#ffbb33);-webkit-background-clip:text;background-clip:text">5</span><div class="flow-step-content"><span class="flow-step-badge">Giai đoạn E</span><span class="flow-step-name">😱 Hoảng loạn</span><span class="flow-step-desc">Bán tháo bằng mọi giá — rủi ro <strong>THẤP NHẤT</strong> nhưng đám đông bán <strong>NHIỀU NHẤT</strong></span></div></div>
+            <div class="flow-connector flow-step"><div class="flow-connector-line"></div><div class="flow-connector-arrow">▼</div></div>
+            <div class="flow-step-card flow-step"><span class="flow-step-num">6</span><div class="flow-step-content"><span class="flow-step-badge">Giai đoạn F</span><span class="flow-step-name">😞 Chán nản, rời bỏ thị trường</span><span class="flow-step-desc">Vùng đáy — cơ hội lớn nhất bị bỏ qua</span></div></div>
+            <div class="flow-connector flow-step"><div class="flow-connector-line"></div><div class="flow-connector-arrow">▼</div></div>
+            <div class="flow-node flow-node--end flow-step"><span class="flow-node-icon">🔁</span><div class="flow-node-body"><span class="flow-node-label">Quay lại</span><span class="flow-node-title">A. Lạc quan</span></div></div>
+        </div>
+
+        <div class="callout callout-success">
+            <div class="callout-title">🧘 Nhà đầu tư kỷ luật (G)</div>
+            <p>DCA đều đặn theo kế hoạch — <strong>KHÔNG</strong> mua đuổi ở đỉnh (C), <strong>KHÔNG</strong> bán tháo ở đáy (E). Nghịch lý cốt lõi: <strong>cảm giác an toàn nhất (đỉnh) chính là lúc nguy hiểm nhất, cảm giác đáng sợ nhất (đáy) lại là lúc an toàn nhất.</strong> Trực giác của bạn — tiến hóa để chạy theo bầy đàn — sẽ liên tục xúi bạn làm điều ngược với lợi ích tài chính.</p>
+        </div>
+
+        <p>Bốn "con quỷ" tâm lý có tên tuổi: <strong>FOMO</strong> (sợ bỏ lỡ — mua vội không phân tích, thường ở giai đoạn B–C); <strong>ác cảm mất mát</strong> (nỗi đau khi mất 1 đồng mạnh gần gấp đôi niềm vui khi được 1 đồng); <strong>hiệu ứng ngược chiều</strong> (bán vội mã đang lãi, ôm chặt mã đang lỗ — cắt cây khỏe, tưới cây bệnh); <strong>neo tâm lý</strong> (bám vào giá vốn của mình như mốc thiêng — trong khi thị trường không biết và không quan tâm bạn đã mua giá nào).</p>
+
+        <p><strong>Bộ giáp chống lại chính mình:</strong> <strong>(1)</strong> viết kế hoạch TRƯỚC khi mua; <strong>(2)</strong> tự động hóa DCA; <strong>(3)</strong> giới hạn tỷ trọng (một mã ≤10–15% danh mục); <strong>(4)</strong> nhật ký giao dịch — sau 6–12 tháng đọc lại, bạn sẽ <em>nhìn thấy</em> lỗi tâm lý của chính mình.</p>
+
+        <h3 id="s9-4">9.4. Nhận diện lừa đảo đầu tư — bộ lọc 3 câu hỏi</h3>
+        <p>Song song thị trường hợp pháp là một "chợ đen" lừa đảo nhắm thẳng vào người mới. Bộ lọc nhanh cho <strong>mọi lời mời đầu tư</strong> trước khi mất một đồng nào:</p>
+
+        <div class="decision-tree">
+            <div class="dt-node dt-node--start dt-reveal">📩 Nhận được lời mời đầu tư từ bất kỳ ai, kênh nào</div>
+            <div class="dt-connector"></div>
+            <div class="dt-node dt-node--question dt-reveal">❓ Cam kết lợi nhuận cố định cao phi lý (3–10%/THÁNG)?</div>
+            <div class="dt-branches">
+                <div class="dt-branch">
+                    <span class="dt-branch-label dt-branch-label--yes">Có</span>
+                    <div class="dt-node dt-node--danger dt-reveal">🚨 LỪA ĐẢO gần như chắc chắn — đầu tư thật KHÔNG AI dám cam kết lãi</div>
+                </div>
+                <div class="dt-branch">
+                    <span class="dt-branch-label dt-branch-label--no">Không</span>
+                    <div class="dt-node dt-node--question dt-reveal">❓ Yêu cầu chuyển tiền vào TK CÁ NHÂN, app/web lạ?</div>
+                    <div class="dt-connector"></div>
+                    <div class="dt-branches">
+                        <div class="dt-branch">
+                            <span class="dt-branch-label dt-branch-label--yes">Có</span>
+                            <div class="dt-node dt-node--danger dt-reveal">🚨 LỪA ĐẢO — tiền hợp pháp chỉ nằm trong TK đứng tên BẠN tại tổ chức có giấy phép</div>
+                        </div>
+                        <div class="dt-branch">
+                            <span class="dt-branch-label dt-branch-label--no">Không</span>
+                            <div class="dt-node dt-node--question dt-reveal">❓ Hối thúc "suất cuối", "thầy" phím hàng, nhóm VIP, phí để rút tiền?</div>
+                            <div class="dt-connector"></div>
+                            <div class="dt-branches">
+                                <div class="dt-branch">
+                                    <span class="dt-branch-label dt-branch-label--yes">Có</span>
+                                    <div class="dt-node dt-node--warning dt-reveal">⚠️ Rất đáng ngờ — tránh xa. Áp lực thời gian là vũ khí của kẻ lừa đảo</div>
+                                </div>
+                                <div class="dt-branch">
+                                    <span class="dt-branch-label dt-branch-label--no">Không</span>
+                                    <div class="dt-node dt-node--success dt-reveal">✅ Vẫn chưa xong: tự tra giấy phép của tổ chức trên <strong>ssc.gov.vn</strong> rồi mới cân nhắc</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p>Ba nguyên tắc vàng: <strong>(1)</strong> lợi nhuận cam kết cao = còi báo động, không phải cơ hội — ai "cam kết" 3%/tháng (≈42%/năm) đều đặn nghĩa là giỏi hơn mọi quỹ đầu tư hàng đầu thế giới, và lại đi mời... bạn? Đó là toán học của mô hình Ponzi. <strong>(2)</strong> dòng tiền hợp pháp có dấu vết — bạn nộp tiền vào TK chứng khoán <strong>đứng tên chính bạn</strong> tại CTCK được UBCKNN cấp phép. <strong>(3)</strong> giấy phép kiểm tra được trong 2 phút trên <strong>ssc.gov.vn</strong> — không có tên = không chuyển tiền, miễn tranh luận.</p>
+
+        <div class="callout callout-info">
+            <div class="callout-title">💡 Lưu ý thêm</div>
+            <p>Kẻ lừa đảo ngày nay <strong>giả mạo cả thương hiệu lớn</strong> — app/website nhái tên CTCK, công ty quỹ uy tín, thậm chí ảnh lãnh đạo thật (cắt ghép, deepfake). Đừng tin <em>tên gọi</em>; hãy kiểm tra <em>kênh chính thức</em>: tải app từ đúng trang chủ/kho ứng dụng chính thống, gọi lại tổng đài công bố trên website chính thức.</p>
+        </div>
+
+        <hr>
+```
+
+Append to `.toc-list`:
+
+```html
+            <li><a href="#s9">9. Rủi ro & tâm lý</a></li>
+            <li class="toc-h3"><a href="#s9-2">9.2 Đa dạng hóa</a></li>
+            <li class="toc-h3"><a href="#s9-3">9.3 Tâm lý đầu tư</a></li>
+            <li class="toc-h3"><a href="#s9-4">9.4 Nhận diện lừa đảo</a></li>
+```
+
+- [ ] **Step 2: Verify**
+
+Reload. Confirm: loss-recovery `.bar-chart` bars grow left-to-right proportionally (50% loss bar visibly ~4× longer than 10% loss bar); donut chart renders as a 4-color ring (not a filled circle — the `::after` inner-circle cutout must be visible) with a legend listing all 4 %s as text (not color-only); the 8-step emotional-cycle `.flow-diagram` reveals top-to-bottom on scroll with the C and E cards showing a red left border; the 9.4 decision-tree correctly nests 3 sequential gates.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add blog/nhap-mon-chung-khoan/index.html
+git commit -m "feat(nhap-mon-chung-khoan): add section 9 — risk, psychology & scam detection"
+```
+
+---
+
+## Task 12: Section 10 — Thuế & chi phí khi đầu tư
+
+**Files:**
+- Modify: `blog/nhap-mon-chung-khoan/index.html`
+
+**Interfaces:**
+- Consumes: `.blog-table`, `.callout`
+- Produces: `<h2 id="s10">`, `<h3 id="s10-1">`..`<h3 id="s10-3">`
+
+- [ ] **Step 1: Insert Section 10 HTML**
+
+```html
+        <h2 id="s10">10. Thuế & chi phí khi đầu tư (cập nhật Luật Thuế TNCN 2025)</h2>
+        <p>Chi phí là thứ <strong>chắc chắn xảy ra</strong> (khác với lợi nhuận chỉ là kỳ vọng), và như Deep Dive Phần 6 đã cho thấy, chênh lệch chi phí nhỏ tích lũy thành khoản khổng lồ sau nhiều năm.</p>
+        <div class="callout callout-info">
+            <div class="callout-title">📌 Cơ sở pháp lý tại thời điểm 07/2026</div>
+            <p>Thuế TNCN với đầu tư chứng khoán theo <strong>Luật Thuế TNCN (sửa đổi) số 109/2025/QH15</strong> — hiệu lực từ <strong>01/07/2026</strong> — cùng Nghị định 253/2026/NĐ-CP và Thông tư 87/2026/TT-BTC. Các mức thuế cốt lõi với chứng khoán niêm yết <strong>được giữ nguyên</strong> so với trước (0,1% khi bán, 5% với cổ tức tiền mặt).</p>
+        </div>
+
+        <h3 id="s10-1">10.1. Bảng thuế nhà đầu tư cá nhân cần biết</h3>
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Tình huống</th><th>Thuế phải nộp</th><th>Ai thu?</th><th>Ghi chú</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Bán</strong> CK niêm yết</td><td><strong>0,1% × giá trị BÁN</strong> mỗi lần</td><td>CTCK tự khấu trừ</td><td>Kể cả khi bán <strong>lỗ</strong> vẫn nộp. Mua không chịu thuế này</td></tr>
+                    <tr><td><strong>Cổ tức tiền mặt</strong></td><td><strong>5%</strong></td><td>Khấu trừ tại nguồn</td><td>Nhận 3.000đ/CP → thực nhận 2.850đ/CP</td></tr>
+                    <tr><td>Cổ tức/thưởng bằng CP</td><td>Chưa nộp lúc nhận; khi <strong>bán</strong>: 5% + 0,1%</td><td>CTCK/VSDC khi bán</td><td>Cơ chế cũ vẫn giữ nguyên tại 07/2026</td></tr>
+                    <tr><td>CK <strong>chưa niêm yết</strong></td><td>20% trên lãi (hoặc 2% trên giá nếu không xác định giá vốn)</td><td>Tự kê khai</td><td>Người mới hầu như không đụng tới</td></tr>
+                    <tr><td>Lãi tiền gửi ngân hàng</td><td><strong>Miễn thuế TNCN</strong></td><td>—</td><td>Lợi thế của kênh tiết kiệm</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p>Điều dễ chịu nhất: với chứng khoán niêm yết, <strong>mọi thứ được khấu trừ tự động tại nguồn</strong> — bạn không phải tự đi kê khai như thu nhập kinh doanh.</p>
+
+        <h3 id="s10-2">10.2. Các loại phí "ăn" vào tài khoản</h3>
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Loại phí</th><th>Mức phổ biến (07/2026)</th><th>Trả cho ai</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Phí giao dịch cổ phiếu</strong></td><td>0% – 0,35% giá trị lệnh, mỗi chiều</td><td>CTCK</td></tr>
+                    <tr><td><strong>Phí lưu ký</strong></td><td>0,27đ/CP/tháng — cực nhỏ</td><td>VSDC (qua CTCK)</td></tr>
+                    <tr><td><strong>Phí quản lý quỹ mở chủ động</strong></td><td>~1,2 – 2%/năm trên NAV</td><td>Công ty QLQ</td></tr>
+                    <tr><td><strong>Phí quản lý ETF</strong></td><td>~0,5 – 0,8%/năm</td><td>Công ty QLQ</td></tr>
+                    <tr><td><strong>Phí mua/bán CCQ mở</strong></td><td>Mua 0–1%; Bán 0–1,5% (giảm dần theo thời gian giữ)</td><td>Công ty QLQ / đại lý</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3 id="s10-3">10.3. Một "vòng" mua–bán tốn bao nhiêu?</h3>
+        <p>Mua rồi bán một lô cổ phiếu trị giá <strong>100 triệu đồng</strong>, CTCK thu phí 0,15%/chiều:</p>
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Khoản</th><th>Cách tính</th><th>Số tiền</th></tr></thead>
+                <tbody>
+                    <tr><td>Phí mua</td><td>100.000.000 × 0,15%</td><td>150.000đ</td></tr>
+                    <tr><td>Phí bán</td><td>100.000.000 × 0,15%</td><td>150.000đ</td></tr>
+                    <tr><td>Thuế bán</td><td>100.000.000 × 0,1%</td><td>100.000đ</td></tr>
+                    <tr><td><strong>Tổng chi phí một vòng</strong></td><td></td><td><strong>400.000đ ≈ 0,4%</strong></td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p>Cổ phiếu phải tăng tối thiểu <strong>~0,4%</strong> bạn mới hòa vốn. Nhân theo phong cách "lướt sóng": 2 vòng/tháng × 12 tháng = 24 vòng × 0,4% ≈ <strong>9,6% giá trị tài khoản bốc hơi vào chi phí mỗi năm</strong> — trước khi tính đúng/sai về giá. Người mua-và-giữ 1 vòng/năm chỉ mất 0,4%. Đây chính là con số đứng sau cảnh báo <em>overtrading</em> ở Phần 8.</p>
+        <div class="callout callout-info">
+            <div class="callout-title">💡 Mẹo thực dụng khi chọn CTCK</div>
+            <p>So sánh: (1) phí giao dịch, (2) lãi suất vay margin <em>(để... biết mà tránh)</em>, (3) độ mượt của app, (4) chất lượng dữ liệu/báo cáo miễn phí. Với người theo trường phái quỹ: so phí quản lý và phí mua/bán giữa các quỹ cùng loại trước khi xuống tiền.</p>
+        </div>
+
+        <hr>
+```
+
+Append to `.toc-list`:
+
+```html
+            <li><a href="#s10">10. Thuế & phí</a></li>
+            <li class="toc-h3"><a href="#s10-3">10.3 Chi phí một vòng mua–bán</a></li>
+```
+
+- [ ] **Step 2: Verify**
+
+Reload and confirm all three tables render, disclaimers/callouts display correctly.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add blog/nhap-mon-chung-khoan/index.html
+git commit -m "feat(nhap-mon-chung-khoan): add section 10 — tax & fees"
+```
+
+---
+
+## Task 13: Section 11 — Lộ trình bắt đầu, playbook & kế hoạch 30 ngày
+
+**Files:**
+- Modify: `blog/nhap-mon-chung-khoan/index.html`
+
+**Interfaces:**
+- Consumes: `.decision-tree`, `.self-check` (existing), `.faq-item` (Task 2), `.blog-table`, `.spring-phases`, `.diagram-box`+`<pre>`
+- Produces: `<h2 id="s11">`, `<h3 id="s11-1">`..`<h3 id="s11-8">`
+
+- [ ] **Step 1: Insert Section 11 HTML**
+
+```html
+        <h2 id="s11">11. Lộ trình bắt đầu: chiến thuật, playbook & kế hoạch 30 ngày</h2>
+        <p>Lý thuyết đủ rồi — giờ là bản đồ hành động. Nguyên tắc thiết kế: <strong>học phí thấp nhất có thể</strong> và <strong>xây nền trước, xây tháp sau</strong>.</p>
+
+        <h3 id="s11-1">11.1. Bước 0 — Nền móng tài chính cá nhân</h3>
+        <p>Trước khi mua bất kỳ chứng khoán nào, tự kiểm tra 3 điều kiện: <strong>(1) Quỹ khẩn cấp</strong> = 3–6 tháng chi phí sinh hoạt, rút được ngay; <strong>(2) Sạch nợ lãi cao</strong> — trả nợ lãi 20–40%/năm chính là khoản "đầu tư" có lợi suất đảm bảo cao nhất bạn có; <strong>(3) Tiền nhàn rỗi thật sự</strong> — chỉ đầu tư khoản không cần đụng tới trong 3–5 năm.</p>
+
+        <h3 id="s11-2">11.2. Mở tài khoản chứng khoán — dễ hơn bạn nghĩ</h3>
+        <p>Với eKYC, toàn bộ quá trình làm online mất khoảng <strong>15 phút</strong>:</p>
+        <ol>
+            <li><strong>Chọn CTCK</strong> trong danh sách được cấp phép trên ssc.gov.vn (SSI, VPS, TCBS, VNDIRECT... — chỉ minh họa, không khuyến nghị)</li>
+            <li><strong>Tải app chính thức</strong> từ App Store/Google Play, đăng ký bằng CCCD gắn chip + selfie/video khuôn mặt</li>
+            <li><strong>Ký hợp đồng mở tài khoản điện tử</strong>, nhận số tài khoản chứng khoán</li>
+            <li><strong>Nộp tiền</strong> bằng chuyển khoản từ TK ngân hàng <em>đứng tên bạn</em> vào TK chứng khoán <em>đứng tên bạn</em> — không bao giờ chuyển cho cá nhân trung gian</li>
+            <li>Riêng <strong>chứng chỉ quỹ mở</strong>: mua qua app CTCK, app công ty QLQ, hoặc nền tảng phân phối (Fmarket) — eKYC tương tự</li>
+        </ol>
+
+        <h3 id="s11-3">11.3. Bản đồ 6 tháng đầu tiên</h3>
+
+        <div class="decision-tree">
+            <div class="dt-node dt-node--start dt-reveal">🛡️ BƯỚC 0 — Nền móng<br>Quỹ khẩn cấp + sạch nợ lãi cao + tiền nhàn rỗi 3–5 năm</div>
+            <div class="dt-connector"></div>
+            <div class="dt-node dt-reveal">📱 Mở tài khoản chứng khoán — eKYC ~15 phút</div>
+            <div class="dt-connector"></div>
+            <div class="dt-node dt-reveal">🌱 THÁNG 1–3 — DCA quỹ mở/ETF định kỳ, số tiền nhỏ cố định</div>
+            <div class="dt-connector"></div>
+            <div class="dt-node dt-reveal">📚 THÁNG 3–6 — Học đọc BCTC & chỉ số cơ bản, lập watchlist 5–10 doanh nghiệp</div>
+            <div class="dt-connector"></div>
+            <div class="dt-node dt-node--question dt-reveal">❓ Đủ tự tin phân tích & có thời gian theo dõi doanh nghiệp?</div>
+            <div class="dt-branches">
+                <div class="dt-branch">
+                    <span class="dt-branch-label dt-branch-label--no">Chưa</span>
+                    <div class="dt-node dt-node--success dt-reveal">✅ Tiếp tục 100% qua quỹ/ETF — hoàn toàn ổn, nhiều người đầu tư cả đời theo cách này</div>
+                </div>
+                <div class="dt-branch">
+                    <span class="dt-branch-label dt-branch-label--yes">Rồi</span>
+                    <div class="dt-node dt-node--success dt-reveal">✅ Mở thêm 20–30% danh mục cho cổ phiếu tự chọn — phần lõi vẫn là quỹ/ETF</div>
+                </div>
+            </div>
+            <div class="dt-connector"></div>
+            <div class="dt-node dt-node--danger dt-reveal">⛔ KỶ LUẬT NĂM ĐẦU (áp dụng cho cả 2 nhánh trên): KHÔNG margin — KHÔNG phái sinh — KHÔNG mua theo "phím hàng"</div>
+        </div>
+
+        <div class="callout callout-success">
+            <div class="callout-title">💡 Nhánh "tiếp tục 100% quỹ" không phải thất bại</div>
+            <p>Đầu tư qua quỹ/ETF trọn đời là chiến lược hoàn toàn chính danh — nhiều huyền thoại đầu tư khuyên chính điều này cho người không làm nghề tài chính. Sở dĩ tháng 1–3 chỉ mua với số tiền nhỏ: mục tiêu giai đoạn này không phải lợi nhuận mà là <strong>làm quen cảm xúc</strong> — lần đầu thấy tài khoản −5% bạn sẽ hiểu về bản thân nhiều hơn mọi cuốn sách.</p>
+        </div>
+
+        <h3 id="s11-4">11.4. Checklist 7 câu hỏi trước khi bấm "Mua"</h3>
+        <div class="self-check">
+            <div class="self-check-title">☑️ Trả lời trơn tru cả 7 → bạn đã đi trước phần lớn người mới</div>
+            <ol>
+                <li>Tiền này có phải tiền nhàn rỗi ≥3 năm không?</li>
+                <li>Mình có nói được <strong>trong 3 câu</strong> lý do mua không?</li>
+                <li>Đã xem P/E, P/B, ROE so lịch sử/ngành (cổ phiếu), hoặc phí + chiến lược + lịch sử NAV (quỹ) chưa?</li>
+                <li>Nếu giá giảm 20% ngay sau khi mua, kế hoạch của mình là gì? (viết ra TRƯỚC)</li>
+                <li>Sau khi mua, mã này chiếm bao nhiêu % danh mục? Có vượt giới hạn tự đặt không?</li>
+                <li>Đây là quyết định của mình sau khi tự phân tích, hay vì "người ta bảo"?</li>
+                <li>Lệnh đặt là LO với giá mình chọn, hay đang định quăng lệnh MP lúc thị trường loạn?</li>
+            </ol>
+        </div>
+
+        <h3 id="s11-5">11.5. FAQ nhanh</h3>
+        <details class="faq-item">
+            <summary>Cần bao nhiêu tiền để bắt đầu?</summary>
+            <div class="faq-item-body">Ít hơn bạn nghĩ. CCQ mở: nhiều quỹ nhận lệnh từ <strong>~100 nghìn đồng</strong>. Cổ phiếu/ETF: tối thiểu 1 lô 100 CP, từ vài trăm nghìn đến vài triệu tùy thị giá. Quan trọng của giai đoạn đầu là <strong>hình thành thói quen</strong>, không phải quy mô vốn — 500 nghìn/tháng đều đặn tốt hơn 50 triệu bốc đồng một lần.</div>
+        </details>
+        <details class="faq-item">
+            <summary>Có phải canh bảng điện cả ngày không?</summary>
+            <div class="faq-item-body">Không — và càng không nên. Người theo quỹ/ETF + DCA chỉ cần vài phút mỗi tháng (hoặc 0 phút nếu bật SIP); người tự chọn cổ phiếu cần vài giờ/tuần đọc báo cáo, không phải nhìn giá nhấp nháy. Canh bảng cả ngày chỉ kích hoạt "con quỷ" ở mục 9.3.</div>
+        </details>
+        <details class="faq-item">
+            <summary>Nên mở bao nhiêu tài khoản chứng khoán?</summary>
+            <div class="faq-item-body">Một tài khoản ở một CTCK uy tín là đủ cho người mới. Nhiều tài khoản không làm bạn lời hơn, chỉ làm loãng sự tập trung.</div>
+        </details>
+        <details class="faq-item">
+            <summary>Thị trường đang cao/thấp, có nên chờ "thời điểm đẹp" mới bắt đầu?</summary>
+            <div class="faq-item-body">Đây là bẫy số 10 ở Phần 12. Không ai — kể cả chuyên gia — đoán đúng đỉnh/đáy bền bỉ. Câu trả lời của tài liệu này là DCA: chia nhỏ tiền vào đều đặn để <em>thời điểm</em> không còn là quyết định phải đoán. Thứ bạn kiểm soát được là <strong>thời gian ở trong thị trường</strong>, không phải <strong>chọn thời điểm</strong>.</div>
+        </details>
+
+        <h3 id="s11-6">11.6. Thực đơn chiến thuật — chọn MỘT, viết ra, theo đúng</h3>
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Chiến thuật</th><th>Cách vận hành</th><th>Quy tắc MUA</th><th>Quy tắc BÁN</th><th>Hợp với ai</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>① DCA thuần vào quỹ/ETF</strong> <em>(mặc định)</em></td><td>100% tiền chảy định kỳ vào 1–2 quỹ mở/ETF</td><td>Số tiền cố định, ngày cố định (SIP), bất kể thị trường xanh đỏ</td><td>Chỉ bán khi đến hạn mục tiêu tài chính — <strong>không</strong> bán vì thị trường giảm</td><td>Người bận rộn, mới hoàn toàn; ~0 giờ/tuần</td></tr>
+                    <tr><td><strong>② Lõi – vệ tinh</strong></td><td>70–80% lõi (như ①) + 20–30% vệ tinh cổ phiếu tự chọn</td><td>Vệ tinh: chỉ mua mã qua checklist 11.4, mỗi mã ≤10–15%</td><td>Vệ tinh: bán khi luận điểm sai hoặc chạm dừng lỗ viết trước</td><td>Đã học xong Phần 7, có 3–5 giờ/tuần</td></tr>
+                    <tr><td><strong>③ Mua-và-giữ cổ phiếu cơ bản</strong></td><td>Danh mục 5–10 DN tốt, nắm nhiều năm</td><td>Chỉ mua khi trả lời trơn tru bảng chỉ số Phần 7; giải ngân từng phần</td><td>Bán khi doanh nghiệp xấu đi thật — <strong>không</strong> bán chỉ vì giá giảm</td><td>Chịu đọc BCTC sâu, tâm lý vững (chịu −30%)</td></tr>
+                    <tr><td><strong>④ Tái cân bằng định kỳ</strong> <em>(lớp phủ)</em></td><td>Giữ đúng tỷ lệ phân bổ mục tiêu</td><td>Mỗi 6–12 tháng (hoặc lệch &gt;5–10 điểm %): mua thêm phần đang hụt</td><td>Cùng lúc: bán bớt phần đang phình quá tỷ lệ</td><td>Tất cả mọi người</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="callout callout-info">
+            <div class="callout-title">💡 Vì sao tái cân bằng là "chốt lời" thông minh nhất</div>
+            <p>Kế hoạch 50/50 cổ phiếu/trái phiếu. Sau một năm cổ phiếu tăng mạnh, danh mục thành 65/35 → tái cân bằng buộc bạn <strong>bán bớt cổ phiếu lúc đã tăng cao</strong>; khi thị trường sập, tỷ lệ thành 40/60 → buộc bạn <strong>mua thêm cổ phiếu đúng lúc rẻ</strong>. "Bán cao – mua thấp" được thực thi <strong>bằng toán học thay vì bằng lòng dũng cảm</strong>.</p>
+        </div>
+
+        <h3 id="s11-7">11.7. Playbook tình huống — "nếu... thì..."</h3>
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>Tình huống</th><th>Hành động theo kế hoạch</th></tr></thead>
+                <tbody>
+                    <tr><td>📉 Thị trường giảm 20–30%, tin xấu khắp nơi</td><td>KHÔNG bán phần lõi. Kiểm tra quỹ khẩn cấp còn nguyên → <strong>DCA vẫn chạy như lịch</strong> (đang mua rẻ hơn)</td></tr>
+                    <tr><td>📈 Thị trường tăng nóng, "ngứa tay" muốn dồn thêm</td><td>Giữ nguyên số tiền DCA; nếu một lớp tài sản phình &gt;5–10 điểm % → tái cân bằng (bán bớt!)</td></tr>
+                    <tr><td>🔻 Cổ phiếu vệ tinh chạm mức dừng lỗ đã viết trước</td><td>Thực thi. Không "gồng thêm tí". Ghi vào nhật ký: luận điểm sai ở đâu</td></tr>
+                    <tr><td>🚀 Cổ phiếu lãi 50%+, phình lên 25% danh mục</td><td>Bán bớt về đúng giới hạn 10–15%/mã; phần thu về chảy vào phần đang hụt</td></tr>
+                    <tr><td>💰 Nhận khoản tiền lớn (thưởng Tết...)</td><td>Không all-in một ngày. Chia giải ngân theo kế hoạch trong 6–12 tháng</td></tr>
+                    <tr><td>🗣️ Được "phím hàng", tin nội bộ, nhóm VIP</td><td>Mặc định bỏ qua. Nếu thú vị thật → watchlist, tự phân tích, quyết định sau <strong>tối thiểu 2 tuần</strong></td></tr>
+                    <tr><td>😴 Một tháng quá bận, không ngó gì thị trường</td><td>Không sao — SIP tự chạy. Đây là <em>tính năng</em>, không phải lỗi</td></tr>
+                    <tr><td>🧾 Đến kỳ review (6–12 tháng)</td><td>30–60 phút: đối chiếu danh mục với kế hoạch → tái cân bằng nếu lệch; KHÔNG đổi chiến thuật chỉ vì một năm xấu</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3 id="s11-8">11.8. Kế hoạch hành động 30 ngày</h3>
+
+        <div class="spring-phases">
+            <div class="spring-phase">
+                <div class="spring-phase-left"><div class="spring-phase-num">1</div><div class="spring-phase-line"></div></div>
+                <div class="spring-phase-body">
+                    <div class="spring-phase-title">Tuần 1 — dựng nền và mở cửa</div>
+                    <ul class="spring-phase-items">
+                        <li><strong>Ngày 1:</strong> tính chi phí sinh hoạt 1 tháng × 3–6 = mục tiêu quỹ khẩn cấp; liệt kê nợ lãi cao</li>
+                        <li><strong>Ngày 2–3:</strong> tra CTCK trên ssc.gov.vn, mở TK eKYC (~15 phút), dành 30 phút chỉ để nhìn bảng giá &amp; nến D1</li>
+                        <li><strong>Ngày 4–7:</strong> chọn <strong>một</strong> chiến thuật ở 11.6, điền bản kế hoạch 1 trang dưới đây. Chưa mua gì cả</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="spring-phase">
+                <div class="spring-phase-left"><div class="spring-phase-num">2</div><div class="spring-phase-line"></div></div>
+                <div class="spring-phase-body">
+                    <div class="spring-phase-title">Tuần 2 — giao dịch đầu tiên (tiền thật, quy mô nhỏ)</div>
+                    <ul class="spring-phase-items">
+                        <li>Nộp tiền tháng đầu theo kế hoạch; đặt <strong>lệnh mua đầu tiên</strong> — LO, giá = giá khớp gần nhất hoặc thấp hơn 1–2 bước giá, khối lượng bội số 100</li>
+                        <li>Với CCQ quỹ mở: chú ý <strong>giờ chốt sổ lệnh (cut-off)</strong> — lệnh sau giờ chốt khớp theo NAV kỳ <em>kế tiếp</em></li>
+                        <li>Bật <strong>SIP tự động</strong> cho các tháng sau</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="spring-phase">
+                <div class="spring-phase-left"><div class="spring-phase-num">3–4</div></div>
+                <div class="spring-phase-body">
+                    <div class="spring-phase-title">Tuần 3–4 — xây "phòng gym" luyện tập</div>
+                    <ul class="spring-phase-items">
+                        <li>Lập watchlist 5–10 doanh nghiệp mình <em>hiểu sản phẩm</em> của họ</li>
+                        <li>Tải BCTC gần nhất của 1 doanh nghiệp, tự tính bảng chỉ số Phần 7.2 — sai cũng được, đây là tập tạ</li>
+                        <li>Khởi động sổ paper trading theo giai đoạn 1–2 của mục 8.6</li>
+                        <li><strong>Ngày 30:</strong> buổi review đầu tiên (30 phút) — đối chiếu với kế hoạch, đặt lịch review kế tiếp</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <p>Bản kế hoạch 1 trang cần điền ở Tuần 1:</p>
+        <div class="diagram-box"><pre>┌──────────────────────────────────────────────────────────────────┐
+│           KẾ HOẠCH ĐẦU TƯ 1 TRANG — ngày ____/____/______        │
+├──────────────────────────────────────────────────────────────────┤
+│ 1. Mục tiêu: ________________ sau ____ năm (vd: 500tr sau 7 năm) │
+│ 2. Quỹ khẩn cấp: ĐỦ ☐ / CHƯA ☐   Nợ lãi cao: HẾT ☐ / CÒN ☐       │
+│ 3. DCA mỗi tháng: __________ đ, vào ngày ____ (bật SIP: ☐)       │
+│ 4. Phân bổ mục tiêu:  Quỹ/ETF ____%  ·  CP tự chọn ____%         │
+│                       TP/tiết kiệm ____%  ·  Tiền mặt ____%      │
+│ 5. Chiến thuật đã chọn (11.6):  ① ☐   ② ☐   ③ ☐  (+④ luôn bật)  │
+│ 6. Giới hạn: 1 mã ≤ ____% danh mục · dừng lỗ vệ tinh: _________  │
+│ 7. CAM KẾT: không margin, không phái sinh đến ____/______        │
+│ 8. Kỳ review: mỗi ____ tháng · lệch quá ____% thì tái cân bằng   │
+│                                          Ký tên: _______________ │
+└──────────────────────────────────────────────────────────────────┘</pre></div>
+
+        <p>Sau 30 ngày, bạn có: tài khoản vận hành, dòng DCA tự động, một kế hoạch có chữ ký, một playbook phản xạ, và một phòng tập miễn phí. Phần còn lại là <strong>lặp lại một cách nhàm chán</strong> — và trong đầu tư, nhàm chán là một lời khen.</p>
+
+        <hr>
+```
+
+Append to `.toc-list`:
+
+```html
+            <li><a href="#s11">11. Lộ trình bắt đầu</a></li>
+            <li class="toc-h3"><a href="#s11-3">11.3 Bản đồ 6 tháng</a></li>
+            <li class="toc-h3"><a href="#s11-4">11.4 Checklist 7 câu hỏi</a></li>
+            <li class="toc-h3"><a href="#s11-5">11.5 FAQ</a></li>
+            <li class="toc-h3"><a href="#s11-6">11.6 Thực đơn chiến thuật</a></li>
+            <li class="toc-h3"><a href="#s11-7">11.7 Playbook tình huống</a></li>
+            <li class="toc-h3"><a href="#s11-8">11.8 Kế hoạch 30 ngày</a></li>
+```
+
+- [ ] **Step 2: Verify**
+
+Reload. Confirm the 6-month `.decision-tree` renders as a long linear chain (5 nodes) into a 2-way branch, then re-converges into one shared danger node; confirm all 4 `<details class="faq-item">` expand/collapse on click (native, no JS needed) with the `+` glyph rotating to `×`; confirm the 30-day `.spring-phases` shows 3 numbered entries (1 / 2 / 3–4); confirm the 1-page-plan ASCII box renders with intact box-drawing characters.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add blog/nhap-mon-chung-khoan/index.html
+git commit -m "feat(nhap-mon-chung-khoan): add section 11 — roadmap, playbook & 30-day plan"
+```
+
+---
+
+## Task 14: Section 12 (10 sai lầm) + Kết luận (8 điều cần nhớ + 13-question quiz)
+
+**Files:**
+- Modify: `blog/nhap-mon-chung-khoan/index.html`
+
+**Interfaces:**
+- Consumes: `.blog-table`, `.faq-item` (Task 2, reused for the quiz accordion), `.self-check`
+- Produces: `<h2 id="s12">`, `<h2 id="ket-luan">`, `<h3 id="kl-1">`, `<h3 id="kl-2">`
+
+- [ ] **Step 1: Insert Section 12 + Conclusion HTML**
+
+```html
+        <h2 id="s12">12. 10 sai lầm kinh điển của người mới (và cách né)</h2>
+        <p>Mỗi sai lầm dưới đây "kinh điển" theo nghĩa đen: thế hệ nhà đầu tư nào cũng có người trả giá vì nó. Đọc chậm — rất có thể bạn sẽ gặp lại chính mình trong tương lai ở đâu đó trong bảng này:</p>
+        <div class="blog-table-wrapper">
+            <table class="blog-table">
+                <thead><tr><th>#</th><th>Sai lầm</th><th>Vì sao chết người</th><th>Liều thuốc phòng</th></tr></thead>
+                <tbody>
+                    <tr><td>1</td><td><strong>All-in một mã theo "phím hàng"</strong></td><td>Gộp 2 rủi ro lớn nhất: không đa dạng hóa + không hiểu mình mua gì</td><td>Tối đa 10–15%/mã; chỉ mua thứ phân tích được (Checklist 11.4)</td></tr>
+                    <tr><td>2</td><td><strong>Dùng margin khi chưa đủ trình</strong></td><td>Khuếch đại lỗ; có thể bị bán giải chấp đúng đáy</td><td>Năm đầu: không margin — không ngoại lệ</td></tr>
+                    <tr><td>3</td><td><strong>"Bắt dao rơi"</strong></td><td>"Đã giảm 50%" không nghĩa là hết giảm — có thể giảm thêm 50% nữa</td><td>Phân tích giá trị độc lập với biểu đồ quá khứ; chờ DN chứng minh</td></tr>
+                    <tr><td>4</td><td><strong>Bán lãi non, gồng lỗ sâu</strong></td><td>Disposition effect (9.3): cắt cây khỏe, tưới cây bệnh</td><td>Kế hoạch thoát lệnh viết trước; xét lại luận điểm chứ không xét giá vốn</td></tr>
+                    <tr><td>5</td><td><strong>Overtrading</strong></td><td>~0,4%/vòng × nhiều vòng = âm thầm mất gần chục % mỗi năm (10.3)</td><td>Đếm số lệnh mỗi tháng; mặc định DCA + nắm giữ</td></tr>
+                    <tr><td>6</td><td><strong>FOMO đỉnh sóng</strong></td><td>Mua ở giai đoạn "ai cũng khoe lãi" = mua tại vùng rủi ro cao nhất</td><td>Nhìn lại chu kỳ cảm xúc 9.3; tiền vào theo lịch, không theo tin nóng</td></tr>
+                    <tr><td>7</td><td><strong>Đầu tư bằng tiền sắp phải dùng</strong></td><td>Bị ép bán đúng lúc tệ nhất vì cần tiền</td><td>Bước 0: quỹ khẩn cấp + chỉ dùng tiền nhàn rỗi 3–5 năm</td></tr>
+                    <tr><td>8</td><td><strong>Nhầm "công ty tốt" với "cổ phiếu đáng mua"</strong></td><td>Công ty tuyệt vời mua giá quá cao vẫn là khoản đầu tư tồi</td><td>Luôn đối chiếu chất lượng với <strong>giá phải trả</strong> (Phần 7)</td></tr>
+                    <tr><td>9</td><td><strong>Tin cam kết lợi nhuận, ủy thác cho "thầy"</strong></td><td>Đây không phải đầu tư thua lỗ — đây là <strong>mất trắng</strong> cho lừa đảo</td><td>Bộ lọc 3 câu hỏi 9.4; tiền chỉ nằm ở TK đứng tên mình</td></tr>
+                    <tr><td>10</td><td><strong>Nhảy vào không học — hoặc học mãi không bắt đầu</strong></td><td>Không học = đánh bạc; cầu toàn chờ "biết đủ" thì lãi kép mất những năm quý nhất</td><td>Lộ trình Phần 11: bắt đầu <strong>nhỏ</strong> và <strong>sớm</strong></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <hr>
+
+        <h2 id="ket-luan">13. Kết luận + Câu hỏi tự kiểm tra</h2>
+
+        <h3 id="kl-1">13.1. Nếu chỉ được nhớ 8 điều từ tài liệu này</h3>
+        <div class="self-check">
+            <div class="self-check-title">📌 8 điều khắc cốt ghi tâm</div>
+            <ol>
+                <li><strong>Lạm phát trừng phạt tiền đứng yên; lãi kép trọng thưởng thời gian</strong> — bắt đầu sớm quan trọng hơn bắt đầu nhiều (Phần 1).</li>
+                <li><strong>Cổ phiếu = làm chủ, trái phiếu = làm chủ nợ, chứng chỉ quỹ = thuê chuyên gia</strong> — ba viên gạch, ba khẩu vị rủi ro (Phần 3–6).</li>
+                <li><strong>Quỹ mở/ETF + DCA là điểm khởi đầu hợp lý nhất</strong> cho người mới: đa dạng hóa tự động, loại bỏ cảm xúc chọn thời điểm, học phí thấp (Phần 6).</li>
+                <li><strong>Giá là thứ bạn trả, giá trị là thứ bạn nhận</strong> — P/E, P/B, ROE là bộ câu hỏi mở đầu, không phải máy ra lệnh mua/bán (Phần 7).</li>
+                <li><strong>Kẻ thù số một mang gương mặt của bạn:</strong> chu kỳ cảm xúc khiến đám đông mua đỉnh bán đáy; kỷ luật + kế hoạch viết trước là bộ giáp duy nhất (Phần 9).</li>
+                <li><strong>Chi phí là "lợi nhuận âm chắc chắn":</strong> một vòng mua–bán ~0,4%; lướt sóng dày đặc âm thầm đốt gần chục % mỗi năm (Phần 10).</li>
+                <li><strong>Lợi nhuận cam kết cao = lừa đảo</strong> — tiền chỉ nằm trong TK đứng tên bạn tại tổ chức có giấy phép tra được trên ssc.gov.vn (Phần 9.4).</li>
+                <li><strong>Nền móng trước, lâu đài sau:</strong> quỹ khẩn cấp → quỹ/ETF nhỏ → học đọc BCTC → mới đến cổ phiếu tự chọn; năm đầu tránh xa margin và phái sinh (Phần 11).</li>
+            </ol>
+        </div>
+
+        <h3 id="kl-2">13.2. Tự kiểm tra: 13 câu hỏi</h3>
+        <p>Thử trả lời không mở lại bài — bấm vào từng câu để xem đáp án gợi ý:</p>
+
+        <details class="faq-item">
+            <summary>1. Vì sao gửi toàn bộ tiền vào tiết kiệm vẫn có thể "nghèo đi"?</summary>
+            <div class="faq-item-body">Lạm phát 3,5%/năm ăn mòn sức mua dù số dư danh nghĩa vẫn tăng — Quy tắc 72: 72 ÷ 3,5 ≈ 20,6 năm để sức mua giảm một nửa nếu chỉ giữ tiền mặt/gửi tiết kiệm dưới lãi suất thực dương. <em>(Phần 1)</em></div>
+        </details>
+        <details class="faq-item">
+            <summary>2. Thị trường sơ cấp và thứ cấp khác nhau thế nào?</summary>
+            <div class="faq-item-body">Sơ cấp: tiền chảy trực tiếp vào doanh nghiệp (IPO/phát hành thêm). Thứ cấp: bạn giao dịch hằng ngày với nhà đầu tư khác — doanh nghiệp không nhận thêm đồng nào, vai trò của nó là tạo thanh khoản. <em>(Phần 2)</em></div>
+        </details>
+        <details class="faq-item">
+            <summary>3. Cổ đông và trái chủ, ai được trả trước khi công ty phá sản?</summary>
+            <div class="faq-item-body">Trái chủ được ưu tiên trả nợ trước cổ đông; đổi lại cổ đông có tiềm năng lợi nhuận không giới hạn (lãi vốn + cổ tức), trái chủ chỉ nhận đúng lãi coupon đã cam kết. <em>(Phần 3, 5)</em></div>
+        </details>
+        <details class="faq-item">
+            <summary>4. Giá tham chiếu 40.000đ trên HOSE — giá trần, giá sàn là bao nhiêu?</summary>
+            <div class="faq-item-body">Trần = 40.000 × 1,07 = 42.800đ; Sàn = 40.000 × 0,93 = 37.200đ. Cổ phiếu về tài khoản chiều T+2 vì chu kỳ thanh toán bù trừ mất 2 ngày làm việc để VSDC đối soát. <em>(Phần 4)</em></div>
+        </details>
+        <details class="faq-item">
+            <summary>5. Lãi suất thị trường tăng mạnh thì giá trái phiếu cũ tăng hay giảm?</summary>
+            <div class="faq-item-body">Giảm — vì coupon cố định của trái phiếu cũ trở nên kém hấp dẫn so với trái phiếu mới phát hành lãi cao hơn, nên phải bán dưới mệnh giá mới có người mua. <em>(Phần 5)</em></div>
+        </details>
+        <details class="faq-item">
+            <summary>6. NAV/CCQ là gì? Vì sao ngân hàng giám sát quan trọng?</summary>
+            <div class="faq-item-body">NAV/CCQ = (tổng tài sản quỹ − nợ) ÷ số CCQ lưu hành — "giá" một chứng chỉ quỹ. Ngân hàng giám sát giữ tài sản độc lập với công ty quản lý quỹ, nên công ty QLQ không thể trực tiếp cầm/ôm tiền của bạn. <em>(Phần 6)</em></div>
+        </details>
+        <details class="faq-item">
+            <summary>7. DCA "đánh bại" cảm xúc của chính bạn bằng cơ chế nào?</summary>
+            <div class="faq-item-body">Số tiền cố định mỗi kỳ tự động mua nhiều đơn vị hơn khi giá rẻ và ít hơn khi giá đắt, đồng thời loại bỏ nhu cầu phải "đoán" thời điểm mua — quyết định khi nào mua được tự động hóa, cảm xúc không có cơ hội can thiệp. <em>(Phần 6.6, 9.3)</em></div>
+        </details>
+        <details class="faq-item">
+            <summary>8. P/E thấp có luôn nghĩa là cổ phiếu rẻ không?</summary>
+            <div class="faq-item-body">Không. Ít nhất 2 bẫy: bẫy lợi nhuận đột biến (E phình to nhờ khoản một-lần) và bẫy đỉnh chu kỳ (P/E thấp nhất thường đúng lúc lợi nhuận sắp lao dốc). <em>(Phần 7)</em></div>
+        </details>
+        <details class="faq-item">
+            <summary>9. Bán 200 triệu cổ phiếu niêm yết (đang lỗ) — nộp thuế bao nhiêu? Nhận cổ tức 10tr thực nhận bao nhiêu?</summary>
+            <div class="faq-item-body">Thuế bán = 200.000.000 × 0,1% = <strong>200.000đ</strong> (nộp dù đang lỗ). Cổ tức thực nhận = 10tr × 95% = <strong>9,5 triệu</strong>. <em>(Phần 10)</em></div>
+        </details>
+        <details class="faq-item">
+            <summary>10. Một fanpage "cam kết lợi nhuận 5%/tháng, chuyển tiền vào TK cá nhân admin" — dấu hiệu lừa đảo?</summary>
+            <div class="faq-item-body">Hai dấu hiệu: (1) cam kết lợi nhuận cố định phi lý cao (~60%/năm), (2) yêu cầu chuyển vào tài khoản cá nhân thay vì TK chứng khoán đứng tên bạn. Kiểm tra giấy phép tổ chức tại <strong>ssc.gov.vn</strong>. <em>(Phần 9.4)</em></div>
+        </details>
+        <details class="faq-item">
+            <summary>11. Nhịp tăng từ 40.000 lên 60.000đ — mức Fibonacci thoái lui 38,2% ở giá nào?</summary>
+            <div class="faq-item-body">60.000 − 0,382 × 20.000 = <strong>52.360đ</strong>. Không nên coi đó là mức "chắc chắn bật lên" vì Fibonacci chỉ là "vùng đáng chú ý" mang tính quy ước và tâm lý đám đông, không phải quy luật vật lý. <em>(Phần 8.4)</em></div>
+        </details>
+        <details class="faq-item">
+            <summary>12. RSI đang ở 75 — có nghĩa phải bán ngay không?</summary>
+            <div class="faq-item-body">Không. Trong xu hướng mạnh, RSI có thể nằm lì trên 70 hàng tuần mà giá vẫn tăng tiếp — "quá mua" không phải lệnh bán tự động. <em>(Phần 8.5)</em></div>
+        </details>
+        <details class="faq-item">
+            <summary>13. Kế hoạch 60/40 (quỹ CP/TP-tiết kiệm), sau 1 năm tăng nóng thành 72/28 — tái cân bằng bảo làm gì?</summary>
+            <div class="faq-item-body">Bán bớt phần quỹ cổ phiếu (đang phình từ 60→72%) và mua thêm phần trái phiếu/tiết kiệm để đưa tỷ lệ về lại 60/40. Đây là "bán cao – mua thấp" thực thi bằng toán học vì cổ phiếu vừa tăng giá (đang "cao") được bán bớt, còn phần đang "hụt" tỷ lệ được mua thêm. <em>(Phần 11.6)</em></div>
+        </details>
+        <p style="font-size:0.82rem;color:var(--muted);margin-top:8px">Nếu bạn trả lời được ≥10/13 câu, bạn đã nắm vững nội dung bài viết. Nếu dưới 10 — quay lại phần được gợi ý và đọc lại.</p>
+
+        <h3 id="kl-3">13.3. Học tiếp ở đâu?</h3>
+        <ul>
+            <li><strong>Sách nhập môn kinh điển:</strong> <em>Nhà đầu tư thông minh</em> (Benjamin Graham), <em>Tâm lý học về tiền</em> (Morgan Housel), <em>Bước đi ngẫu nhiên trên Phố Wall</em> (Burton Malkiel)</li>
+            <li><strong>Nguồn chính thống Việt Nam:</strong> chuyên mục nhà đầu tư trên website UBCKNN, HOSE, HNX; báo cáo phân tích miễn phí của các CTCK lớn (đọc có chọn lọc — họ cũng có xung đột lợi ích)</li>
+            <li><strong>Thực hành:</strong> danh sách theo dõi 5–10 doanh nghiệp + nhật ký giao dịch chính là "trường học" tốt nhất, như lộ trình Phần 11</li>
+        </ul>
+
+        <hr>
+```
+
+Append to `.toc-list`:
+
+```html
+            <li><a href="#s12">12. 10 sai lầm kinh điển</a></li>
+            <li><a href="#ket-luan">13. Kết luận & tự kiểm tra</a></li>
+            <li class="toc-h3"><a href="#kl-1">13.1 8 điều cần nhớ</a></li>
+            <li class="toc-h3"><a href="#kl-2">13.2 Quiz 13 câu</a></li>
+```
+
+- [ ] **Step 2: Verify**
+
+Reload. Confirm the 10-mistake table scrolls horizontally on narrow screens rather than breaking layout, and all 13 quiz `<details>` open/close independently and show the correct answer text.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add blog/nhap-mon-chung-khoan/index.html
+git commit -m "feat(nhap-mon-chung-khoan): add section 12 + conclusion with 13-question quiz"
+```
+
+---
+
+## Task 15: Glossary (filterable) + References + finalize TOC
+
+**Files:**
+- Modify: `blog/nhap-mon-chung-khoan/index.html`
+
+**Interfaces:**
+- Consumes: `.glossary-search input` (Task 2 CSS), `.blog-table`, `.references` (existing); consumes `#glossary-filter` + `#glossary-table` ids expected by the filter script already wired in Task 1's `<script>` block
+- Produces: `<h2 id="glossary">`, `<h2 id="tham-khao">`, final `.post-footer` content stays empty (unchanged)
+
+- [ ] **Step 1: Insert Glossary + References HTML**
+
+```html
+        <h2 id="glossary">14. Bảng thuật ngữ song ngữ (Glossary)</h2>
+        <div class="glossary-search">
+            <input type="text" id="glossary-filter" placeholder="🔍 Tìm thuật ngữ (tiếng Việt hoặc tiếng Anh)...">
+        </div>
+        <div class="blog-table-wrapper">
+            <table class="blog-table" id="glossary-table">
+                <thead><tr><th>Thuật ngữ</th><th>Tiếng Anh</th><th>Giải thích một dòng</th></tr></thead>
+                <tbody>
+                    <tr><td>Chứng khoán</td><td>Securities</td><td>Tên gọi chung tài sản tài chính có thể giao dịch: cổ phiếu, trái phiếu, CCQ, phái sinh</td></tr>
+                    <tr><td>Cổ phiếu</td><td>Stock / Share</td><td>Giấy chứng nhận sở hữu một phần doanh nghiệp</td></tr>
+                    <tr><td>Cổ tức</td><td>Dividend</td><td>Phần lợi nhuận doanh nghiệp chia cho cổ đông</td></tr>
+                    <tr><td>Trái phiếu</td><td>Bond</td><td>Giấy nhận nợ: cho tổ chức phát hành vay, nhận lãi định kỳ + gốc khi đáo hạn</td></tr>
+                    <tr><td>Chứng chỉ quỹ (CCQ)</td><td>Fund certificate</td><td>Đơn vị sở hữu trong một quỹ đầu tư</td></tr>
+                    <tr><td>Quỹ mở</td><td>Open-ended fund</td><td>Quỹ mua lại CCQ theo NAV, quy mô co giãn</td></tr>
+                    <tr><td>ETF</td><td>Exchange-Traded Fund</td><td>Quỹ mô phỏng chỉ số, giao dịch trên sàn như cổ phiếu</td></tr>
+                    <tr><td>NAV</td><td>Net Asset Value</td><td>Giá trị tài sản ròng của quỹ; NAV/CCQ = "giá gốc" một CCQ</td></tr>
+                    <tr><td>Công ty quản lý quỹ</td><td>Fund management company</td><td>Tổ chức được cấp phép ra quyết định đầu tư cho quỹ</td></tr>
+                    <tr><td>Ngân hàng giám sát</td><td>Supervisory bank</td><td>Ngân hàng độc lập giữ tài sản của quỹ</td></tr>
+                    <tr><td>CTCK</td><td>Brokerage / Securities company</td><td>Trung gian đặt lệnh, nơi mở tài khoản</td></tr>
+                    <tr><td>UBCKNN</td><td>State Securities Commission (SSC)</td><td>Cơ quan quản lý nhà nước — ssc.gov.vn</td></tr>
+                    <tr><td>VSDC</td><td>Vietnam Securities Depository</td><td>Tổng công ty lưu ký & bù trừ — "sổ cái trung tâm"</td></tr>
+                    <tr><td>HOSE / HNX / UPCoM</td><td>—</td><td>Ba "sân" giao dịch: HOSE (DN lớn), HNX, UPCoM (điều kiện thấp hơn)</td></tr>
+                    <tr><td>VN-Index / VN30</td><td>—</td><td>Chỉ số toàn sàn HOSE / 30 mã lớn, thanh khoản nhất</td></tr>
+                    <tr><td>Thị trường sơ cấp / thứ cấp</td><td>Primary / Secondary market</td><td>Phát hành lần đầu (tiền vào DN) / nhà đầu tư mua bán lại nhau</td></tr>
+                    <tr><td>IPO</td><td>Initial Public Offering</td><td>Lần đầu doanh nghiệp chào bán cổ phiếu ra công chúng</td></tr>
+                    <tr><td>Giá tham chiếu/trần/sàn</td><td>Reference/Ceiling/Floor price</td><td>Mốc tính biên độ / giá cao nhất / thấp nhất được phép trong phiên</td></tr>
+                    <tr><td>Biên độ dao động</td><td>Daily price limit</td><td>Giới hạn ±% quanh giá tham chiếu</td></tr>
+                    <tr><td>Lô chẵn / lô lẻ</td><td>Round lot / Odd lot</td><td>Đơn vị giao dịch 100 CP / phần lẻ 1–99 CP</td></tr>
+                    <tr><td>ATO / ATC</td><td>At-The-Opening / At-The-Close</td><td>Phiên khớp lệnh định kỳ xác định giá mở/đóng cửa</td></tr>
+                    <tr><td>Lệnh LO / MP</td><td>Limit / Market Order</td><td>Lệnh giới hạn (chọn giá) / lệnh thị trường (khớp ngay)</td></tr>
+                    <tr><td>T+2</td><td>Settlement cycle</td><td>Tài sản về TK chiều ngày làm việc thứ 2 sau giao dịch</td></tr>
+                    <tr><td>Thanh khoản</td><td>Liquidity</td><td>Mức độ dễ mua/bán nhanh mà không làm giá xê dịch mạnh</td></tr>
+                    <tr><td>Vốn hóa</td><td>Market capitalization</td><td>Giá cổ phiếu × tổng số cổ phiếu lưu hành</td></tr>
+                    <tr><td>EPS</td><td>Earnings Per Share</td><td>Lợi nhuận sau thuế chia cho mỗi cổ phiếu</td></tr>
+                    <tr><td>P/E</td><td>Price-to-Earnings</td><td>Giá gấp bao nhiêu lần lợi nhuận mỗi cổ phiếu</td></tr>
+                    <tr><td>P/B</td><td>Price-to-Book</td><td>Giá gấp bao nhiêu lần giá trị sổ sách mỗi cổ phiếu</td></tr>
+                    <tr><td>ROE</td><td>Return on Equity</td><td>Hiệu quả sinh lời trên vốn chủ sở hữu</td></tr>
+                    <tr><td>Tỷ suất cổ tức</td><td>Dividend yield</td><td>Cổ tức tiền mặt mỗi năm chia cho thị giá</td></tr>
+                    <tr><td>BCTC</td><td>Financial statements</td><td>Cân đối kế toán, kết quả kinh doanh, lưu chuyển tiền tệ</td></tr>
+                    <tr><td>DCA</td><td>Dollar-Cost Averaging</td><td>Mua định kỳ số tiền cố định, bình quân hóa giá vốn</td></tr>
+                    <tr><td>Đa dạng hóa</td><td>Diversification</td><td>Phân tán vốn để giảm rủi ro cá biệt</td></tr>
+                    <tr><td>Phân bổ tài sản</td><td>Asset allocation</td><td>Tỷ lệ chia danh mục giữa cổ phiếu, trái phiếu, tiền mặt</td></tr>
+                    <tr><td>Ký quỹ</td><td>Margin</td><td>Vay tiền CTCK để mua thêm CK — khuếch đại cả lãi lẫn lỗ</td></tr>
+                    <tr><td>Bán giải chấp</td><td>Force sell / Margin call</td><td>CTCK cưỡng chế bán khi tỷ lệ ký quỹ vi phạm ngưỡng an toàn</td></tr>
+                    <tr><td>Chứng khoán phái sinh</td><td>Derivatives</td><td>Hợp đồng đặt cược giá tương lai của tài sản gốc</td></tr>
+                    <tr><td>FOMO</td><td>Fear Of Missing Out</td><td>Tâm lý sợ bỏ lỡ khiến mua đuổi không phân tích</td></tr>
+                    <tr><td>Mô hình nến</td><td>Candlestick pattern</td><td>Hình dạng đặc trưng của 1–3 cây nến gợi ý tâm lý mua–bán</td></tr>
+                    <tr><td>Khung thời gian</td><td>Timeframe</td><td>Mỗi cây nến đại diện bao lâu; khung càng nhỏ càng nhiễu</td></tr>
+                    <tr><td>Fibonacci thoái lui</td><td>Fibonacci retracement</td><td>Các mức 23,6–38,2–50–61,8–78,6% dùng làm "vùng đáng chú ý"</td></tr>
+                    <tr><td>RSI</td><td>Relative Strength Index</td><td>Chỉ báo "độ nóng" đà giá thang 0–100</td></tr>
+                    <tr><td>MACD</td><td>Moving Average Convergence Divergence</td><td>Chỉ báo động lượng dựa trên khoảng cách 2 đường EMA</td></tr>
+                    <tr><td>Dải Bollinger</td><td>Bollinger Bands</td><td>MA20 ± 2 độ lệch chuẩn — đo "độ căng" của giá</td></tr>
+                    <tr><td>Giao dịch trên giấy</td><td>Paper trading</td><td>Tập giao dịch bằng lệnh giả định có ghi chép</td></tr>
+                    <tr><td>Tái cân bằng</td><td>Rebalancing</td><td>Định kỳ đưa danh mục về đúng tỷ lệ phân bổ mục tiêu</td></tr>
+                    <tr><td>Lõi – vệ tinh</td><td>Core–Satellite</td><td>70–80% lõi ở quỹ/ETF, phần vệ tinh nhỏ cho cổ phiếu tự chọn</td></tr>
+                    <tr><td>Dừng lỗ</td><td>Stop-loss</td><td>Mức giá/điều kiện thoát lệnh viết TRƯỚC khi mua</td></tr>
+                    <tr><td>Danh sách theo dõi</td><td>Watchlist</td><td>Nhóm 5–10 doanh nghiệp theo dõi trước khi quyết định mua</td></tr>
+                    <tr><td>Lạm phát</td><td>Inflation</td><td>Mức tăng giá chung làm giảm sức mua của tiền</td></tr>
+                    <tr><td>Lãi kép</td><td>Compound interest</td><td>Lãi sinh ra lãi — tăng trưởng theo cấp số nhân theo thời gian</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2 id="tham-khao">15. Nguồn tham khảo chính thức</h2>
+        <div class="references">
+            <div class="references-title">Cơ quan quản lý & vận hành thị trường</div>
+            <ul>
+                <li><a href="https://ssc.gov.vn" target="_blank" rel="noopener">Ủy ban Chứng khoán Nhà nước (UBCKNN)</a> — tra cứu giấy phép CTCK/công ty quản lý quỹ, cảnh báo lừa đảo</li>
+                <li><a href="https://www.hsx.vn" target="_blank" rel="noopener">Sở GDCK TP.HCM (HOSE)</a> — quy chế giao dịch, biên độ, dữ liệu VN-Index/VN30</li>
+                <li><a href="https://www.hnx.vn" target="_blank" rel="noopener">Sở GDCK Hà Nội (HNX)</a> — quy chế HNX & UPCoM</li>
+                <li><a href="https://vsd.vn" target="_blank" rel="noopener">VSDC</a> — lưu ký, thanh toán T+2, phí lưu ký</li>
+                <li><a href="https://mof.gov.vn" target="_blank" rel="noopener">Bộ Tài chính</a> — chính sách thuế, phí, lệ phí lĩnh vực chứng khoán</li>
+            </ul>
+        </div>
+        <div class="references">
+            <div class="references-title">Văn bản pháp luật nền tảng</div>
+            <ul>
+                <li>Luật Chứng khoán số 54/2019/QH14 (sửa đổi, bổ sung bởi Luật số 56/2024/QH15)</li>
+                <li>Luật Thuế thu nhập cá nhân (sửa đổi) số 109/2025/QH15 — hiệu lực từ 01/07/2026</li>
+                <li>Nghị định 253/2026/NĐ-CP; Thông tư 87/2026/TT-BTC hướng dẫn thi hành</li>
+                <li>Thông tư 08/2026/TT-BTC — cải cách vận hành phục vụ nâng hạng thị trường</li>
+            </ul>
+        </div>
+        <div class="references">
+            <div class="references-title">Sách gối đầu giường</div>
+            <ul>
+                <li>Benjamin Graham — <em>Nhà đầu tư thông minh</em> (The Intelligent Investor)</li>
+                <li>Morgan Housel — <em>Tâm lý học về tiền</em> (The Psychology of Money)</li>
+                <li>Burton G. Malkiel — <em>Bước đi ngẫu nhiên trên Phố Wall</em> (A Random Walk Down Wall Street)</li>
+            </ul>
+        </div>
+
+        <div class="callout callout-warn">
+            <div class="callout-title">⚖️ Nhắc lại lần cuối — Miễn trừ trách nhiệm</div>
+            <p>Tài liệu này phục vụ mục đích <strong>giáo dục</strong>, không phải khuyến nghị đầu tư hay tư vấn tài chính/thuế/pháp lý cá nhân. Các con số quy định chính xác theo hiểu biết tốt nhất tại thời điểm <strong>07/2026</strong> nhưng <strong>có thể thay đổi</strong> — trước khi ra quyết định thật, hãy đối chiếu với các nguồn chính thức ở trên. Mọi khoản đầu tư đều có thể thua lỗ, kể cả mất phần lớn vốn. Quyết định — và trách nhiệm — cuối cùng luôn thuộc về bạn. Chúc bạn khởi đầu hành trình đầu tư an toàn và kỷ luật! 🌱</p>
+        </div>
+```
+
+Append to `.toc-list` (final entries):
+
+```html
+            <li><a href="#glossary">14. Glossary</a></li>
+            <li><a href="#tham-khao">15. Nguồn tham khảo</a></li>
+```
+
+- [ ] **Step 2: Verify**
+
+Reload. Type a partial term (e.g. `"P/E"` or `"NAV"`) into the glossary search box and confirm non-matching rows hide live (via the filter script already wired in Task 1) while matching rows stay visible; clear the box and confirm all ~50 rows reappear. Confirm the 3 stacked `.references` boxes and the final disclaimer callout render at the very bottom of the article.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add blog/nhap-mon-chung-khoan/index.html
+git commit -m "feat(nhap-mon-chung-khoan): add glossary with live filter + references"
+```
+
+---
+
+## Task 16: Final verification pass
+
+**Files:**
+- Modify: `blog/nhap-mon-chung-khoan/index.html` (only if verification finds a bug)
+
+**Interfaces:**
+- Consumes: the fully assembled page from Tasks 1–15
+
+- [ ] **Step 1: TOC completeness check**
+
+Open the file and diff the `<h2 id="...">`/`<h3 id="...">` anchors present in the article body against the `<li><a href="#...">` entries in `.toc-list`. Every `<h2>` must have a top-level TOC entry; the flagged `<h3>` entries (4.4, 4.6, 4.7, 4.8, 5-2, 6-3, 6-6, 6-7, 7-2, 8-4, 8-5, 8-6, 9-2..9-4, 10-3, 11-1..11-8 subset, kl-1, kl-2) must resolve to real elements. Fix any mismatch.
+
+- [ ] **Step 2: Link check**
+
+Confirm every internal `href="#..."` (TOC links, in-text cross-references like "Phần 7") resolves to an `id` that exists in the document. Confirm the bottom `.post-nav-fixed` "Back" link (`../index.html`) and the nav brand/portfolio/contact links all resolve relative to `blog/nhap-mon-chung-khoan/index.html` (two levels deep, matching the `../../` pattern used for the favicon and portfolio links).
+
+- [ ] **Step 3: Theme check**
+
+Toggle dark ↔ light via the theme pill button. Confirm every new component (decision-tree, org-map, compare-grid, cashflow-timeline, bar-chart, donut-chart, faq-item, glossary-search input) remains legible and on-palette in both themes — none of them should have hardcoded colors that only work on the dark background.
+
+- [ ] **Step 4: Responsive check**
+
+Resize the viewport to ~375px (mobile), ~700px (tablet), and ~1280px (desktop). Confirm: the `.blog-toc` sidebar disappears below 900px (existing rule, not new), all `.decision-tree` branches stack to a single column below 600px, all `.compare-grid` cards stack below 700px, `.blog-table-wrapper` scrolls horizontally instead of squashing table columns, and the fixed bottom nav never overlaps the last section's content (existing `.blog-article{padding-bottom:72px}` rule should already cover this).
+
+- [ ] **Step 5: Content fidelity spot-check**
+
+Pick 5 numeric facts at random from the source (`assets/download/nhap-mon-chung-khoan-quy-dau-tu.md`) — e.g. the Rule-of-72 example, the ABC company P/E=12 calculation, the T+2 Monday→Wednesday example, the 100tr/9%/3-year bond cash flow, the 0,4%-per-round-trip cost figure — and confirm each one appears correctly on the page with the same numbers.
+
+- [ ] **Step 6: Final commit**
+
+```bash
+git add -A
+git commit -m "chore(nhap-mon-chung-khoan): final verification pass"
+```
+
+---
+
+## Self-Review Notes (for the plan author, already applied above)
+
+- **Spec coverage:** all 15 source sections (1–15, including both numbered Deep Dives per section where present) map to Tasks 3–15; every mermaid `flowchart`/`sequenceDiagram`/`pie` and every ASCII diagram in the source has an explicit HTML/CSS treatment assigned (see "Reusable Diagram Components" table above) — none are silently dropped.
+- **Placeholder scan:** no task contains "TBD"/"add later"/"similar to Task N" without inline code — every task step embeds the literal Vietnamese HTML to insert. The two spots that intentionally simplify vs. the mermaid source (the org-map's simplified single-arrow oversight banner instead of multi-target dashed SVG lines, and the loss-recovery bar-chart capping visual width at the 50%-loss row with 70%/90% called out as text) are documented as deliberate scope decisions, not omissions.
+- **Type/class consistency:** CSS class names introduced in Task 2 (`.decision-tree`, `.dt-node`, `.dt-branches`, `.dt-branch`, `.org-map`, `.org-node`, `.compare-grid`, `.compare-col`, `.cashflow-timeline`, `.cf-point`, `.bar-chart`, `.bar-row`, `.donut-chart`, `.donut-legend`, `.faq-item`, `.glossary-search`) are used with exactly matching names in every later task — cross-checked while writing Tasks 3–15.
+
+
+
