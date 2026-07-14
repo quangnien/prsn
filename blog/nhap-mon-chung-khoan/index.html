@@ -1592,10 +1592,22 @@
 </nav>
 
 <script>
+    // ── Failsafe: guarantee reveal-gated content is never stuck invisible ──
+    function forceRevealAll() {
+        document.querySelectorAll('.dt-reveal:not(.visible), .flow-step:not(.visible)').forEach(el => el.classList.add('visible'));
+        document.querySelectorAll('.svg-draw .draw-path').forEach(path => {
+            path.style.transition = 'none';
+            path.style.strokeDashoffset = 0;
+        });
+    }
+
     // ── Theme ──────────────────────────────────────────────────────────────
-    const saved = localStorage.getItem('blog-theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', saved);
-    document.getElementById('theme-label').textContent = saved === 'dark' ? 'Dark' : 'Light';
+    try {
+        const saved = localStorage.getItem('blog-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', saved);
+        document.getElementById('theme-label').textContent = saved === 'dark' ? 'Dark' : 'Light';
+    } catch (e) { console.warn('theme init failed', e); }
+
     function toggleTheme() {
         const cur = document.documentElement.getAttribute('data-theme');
         const next = cur === 'dark' ? 'light' : 'dark';
@@ -1605,76 +1617,97 @@
     }
 
     // ── Reading progress bar ──────────────────────────────────────────────
-    const bar = document.getElementById('reading-progress');
-    window.addEventListener('scroll', () => {
-        const doc = document.documentElement;
-        const scrolled = doc.scrollTop;
-        const total = doc.scrollHeight - doc.clientHeight;
-        bar.style.width = (total > 0 ? (scrolled / total) * 100 : 0) + '%';
-    }, { passive: true });
+    try {
+        const bar = document.getElementById('reading-progress');
+        window.addEventListener('scroll', () => {
+            const doc = document.documentElement;
+            const scrolled = doc.scrollTop;
+            const total = doc.scrollHeight - doc.clientHeight;
+            bar.style.width = (total > 0 ? (scrolled / total) * 100 : 0) + '%';
+        }, { passive: true });
+    } catch (e) { console.warn('reading-progress init failed', e); }
 
     // ── Flow / decision-tree / diagram staggered reveal ────────────────────
-    const revealGroups = document.querySelectorAll('.flow-diagram, .decision-tree, .orderbook-diagram, .candle-anatomy, .pattern-grid, .plan-template');
-    revealGroups.forEach(group => {
-        const descendants = Array.from(group.querySelectorAll('.flow-step, .dt-reveal'));
-        const steps = group.matches('.dt-reveal') ? [group, ...descendants] : descendants;
-        if (!steps.length) return;
-        const obs = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    steps.forEach((step, i) => setTimeout(() => step.classList.add('visible'), i * 100));
-                    obs.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.15 });
-        obs.observe(group);
-    });
+    try {
+        const revealGroups = document.querySelectorAll('.flow-diagram, .decision-tree, .orderbook-diagram, .candle-anatomy, .pattern-grid, .plan-template');
+        revealGroups.forEach(group => {
+            const descendants = Array.from(group.querySelectorAll('.flow-step, .dt-reveal'));
+            const steps = group.matches('.dt-reveal') ? [group, ...descendants] : descendants;
+            if (!steps.length) return;
+            const obs = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        steps.forEach((step, i) => setTimeout(() => step.classList.add('visible'), i * 100));
+                        obs.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.01, rootMargin: '0px 0px -5% 0px' });
+            obs.observe(group);
+        });
+    } catch (e) {
+        console.warn('reveal-diagram init failed, forcing visible', e);
+        forceRevealAll();
+    }
 
-    // ── SVG diagram draw-in (Fibonacci spiral & retracement chart) ─────────
-    document.querySelectorAll('.svg-draw').forEach(container => {
-        const path = container.querySelector('.draw-path');
-        if (!path) return;
-        const len = path.getTotalLength();
-        path.style.strokeDasharray = len;
-        path.style.strokeDashoffset = len;
-        const obs = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    path.style.transition = 'stroke-dashoffset 1.8s ease';
-                    path.style.strokeDashoffset = 0;
-                    obs.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.2 });
-        obs.observe(container);
-    });
+    // ── SVG diagram draw-in (Fibonacci spiral, retracement chart, trend chart) ─
+    try {
+        document.querySelectorAll('.svg-draw').forEach(container => {
+            const path = container.querySelector('.draw-path');
+            if (!path) return;
+            const len = path.getTotalLength();
+            path.style.strokeDasharray = len;
+            path.style.strokeDashoffset = len;
+            const obs = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        path.style.transition = 'stroke-dashoffset 1.8s ease';
+                        path.style.strokeDashoffset = 0;
+                        obs.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.01, rootMargin: '0px 0px -5% 0px' });
+            obs.observe(container);
+        });
+    } catch (e) {
+        console.warn('svg-draw init failed, forcing visible', e);
+        forceRevealAll();
+    }
 
     // ── TOC active link ────────────────────────────────────────────────────
-    const tocLinks = document.querySelectorAll('.toc-list a');
-    const headings = Array.from(tocLinks)
-        .map(a => document.querySelector(a.getAttribute('href')))
-        .filter(Boolean);
-    const tocObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                tocLinks.forEach(a => a.classList.remove('active'));
-                const link = document.querySelector(`.toc-list a[href="#${entry.target.id}"]`);
-                if (link) link.classList.add('active');
-            }
-        });
-    }, { rootMargin: '-20% 0% -70% 0%' });
-    headings.forEach(h => tocObserver.observe(h));
+    try {
+        const tocLinks = document.querySelectorAll('.toc-list a');
+        const headings = Array.from(tocLinks)
+            .map(a => document.querySelector(a.getAttribute('href')))
+            .filter(Boolean);
+        const tocObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    tocLinks.forEach(a => a.classList.remove('active'));
+                    const link = document.querySelector(`.toc-list a[href="#${entry.target.id}"]`);
+                    if (link) link.classList.add('active');
+                }
+            });
+        }, { rootMargin: '-20% 0% -70% 0%' });
+        headings.forEach(h => tocObserver.observe(h));
+    } catch (e) { console.warn('toc scrollspy init failed', e); }
 
     // ── Glossary live filter ───────────────────────────────────────────────
-    const glossaryFilter = document.getElementById('glossary-filter');
-    if (glossaryFilter) {
-        glossaryFilter.addEventListener('input', (e) => {
-            const q = e.target.value.trim().toLowerCase();
-            document.querySelectorAll('#glossary-table tbody tr').forEach(row => {
-                row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    try {
+        const glossaryFilter = document.getElementById('glossary-filter');
+        if (glossaryFilter) {
+            glossaryFilter.addEventListener('input', (e) => {
+                const q = e.target.value.trim().toLowerCase();
+                document.querySelectorAll('#glossary-table tbody tr').forEach(row => {
+                    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+                });
             });
-        });
-    }
+        }
+    } catch (e) { console.warn('glossary filter init failed', e); }
+
+    // ── Global failsafe: guarantee visibility even if an observer never fires
+    //    (e.g. direct anchor-link navigation racing observer setup, or an
+    //    element whose visible-ratio never crosses the intersection threshold) ──
+    window.addEventListener('load', () => { setTimeout(forceRevealAll, 4000); });
 </script>
 </body>
 </html>
