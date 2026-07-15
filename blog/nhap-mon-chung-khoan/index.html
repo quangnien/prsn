@@ -507,6 +507,26 @@
             <p><strong>KHÔNG dùng margin trong ít nhất năm đầu tiên.</strong> Phần lớn các vụ "cháy tài khoản" trên thị trường đều có bàn tay của đòn bẩy.</p>
         </div>
 
+        <div class="deep-dive">
+            <div class="deep-dive-label">🔬 Deep Dive</div>
+            <div class="deep-dive-title">Bán giải chấp kích hoạt ở đâu? — con số cụ thể</div>
+            <div class="deep-dive-audience">Dành cho: người muốn hiểu chính xác cơ chế "cháy tài khoản"</div>
+            <p>Ví dụ: vốn tự có 100 triệu, vay margin thêm 100 triệu (tỷ lệ ký quỹ ban đầu 50%, đòn bẩy 1:1) → mua 200 triệu cổ phiếu ABC. Khoản nợ vay <strong>không đổi</strong> khi giá biến động — chỉ giá trị tài sản đảm bảo và vốn chủ sở hữu thay đổi:</p>
+            <div class="blog-table-wrapper">
+                <table class="blog-table">
+                    <thead><tr><th>Giá ABC thay đổi</th><th>Giá trị TS đảm bảo</th><th>Nợ vay margin</th><th>Vốn chủ sở hữu</th><th>Tỷ lệ ký quỹ thực tế</th><th>Trạng thái</th></tr></thead>
+                    <tbody>
+                        <tr><td>Chưa giảm</td><td>200tr</td><td>100tr</td><td>100tr</td><td>50%</td><td>An toàn</td></tr>
+                        <tr><td>Giảm 10%</td><td>180tr</td><td>100tr</td><td>80tr</td><td>~44,4%</td><td>An toàn</td></tr>
+                        <tr><td>Giảm 20%</td><td>160tr</td><td>100tr</td><td>60tr</td><td>37,5%</td><td>Cảnh báo sớm</td></tr>
+                        <tr><td>Giảm 25%</td><td>150tr</td><td>100tr</td><td>50tr</td><td>~33,3%</td><td>🚨 Gọi ký quỹ (margin call)</td></tr>
+                        <tr><td>Giảm 30%, không nộp thêm</td><td>140tr</td><td>100tr</td><td>40tr</td><td>~28,6%</td><td>⚠️ Bán giải chấp (force sell)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>Tỷ lệ ký quỹ ban đầu, tỷ lệ duy trì và ngưỡng gọi ký quỹ cụ thể <strong>do từng CTCK quy định khác nhau</strong> trong khung của UBCKNN — bảng trên minh họa <em>cơ chế</em>, không phải số chính xác của một CTCK cụ thể. Điểm mấu chốt: với vốn tự có ban đầu chỉ 100 triệu, một cú giảm giá 30% của riêng cổ phiếu ABC — hoàn toàn có thể xảy ra trong vài tuần xấu — khiến CTCK <strong>tự động bán</strong> cổ phiếu của bạn, thường đúng lúc giá đã thấp, khóa chặt khoản lỗ 60% trên vốn thật (mất 60tr/100tr) trong khi bản thân cổ phiếu mới giảm 30%. Đây chính xác là lý do quy tắc cứng ở trên tồn tại.</p>
+        </div>
+
         <hr>
 
         <h2 id="s5">5. Trái phiếu: cho vay lấy lãi — nhưng không phải không có rủi ro</h2>
