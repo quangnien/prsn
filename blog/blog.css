@@ -407,6 +407,24 @@ body {
 }
 .callout-success .callout-title { color: var(--teal); }
 
+.callout.callout-legal {
+    background: linear-gradient(135deg, rgba(255,112,112,0.16), rgba(255,187,51,0.10));
+    border: 2px solid var(--danger);
+    border-left-width: 6px;
+    border-radius: var(--radius-lg);
+    padding: 22px 24px;
+    margin: 2rem 0;
+}
+.callout-legal .callout-title {
+    color: var(--danger);
+    font-size: 1rem;
+}
+.callout-legal p {
+    font-size: 0.95rem;
+    line-height: 1.75;
+    font-weight: 500;
+}
+
 .callout-title {
     font-size: 0.78rem;
     font-weight: 800;
